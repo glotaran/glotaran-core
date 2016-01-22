@@ -1,0 +1,1 @@
+# glotaran-core

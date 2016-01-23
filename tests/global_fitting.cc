@@ -149,13 +149,16 @@ struct CombinedResidual{
   
 };
 
-template<int n, int m> Eigen::Matrix<double, n, m> create_matrix(){
+Eigen::MatrixXd create_matrix(int n, int m){
   
-  Eigen::Matrix<double, n, m> matrix;
-  for(int i=0; i<n; ++i){
-    for(int j=0; j<m; ++j){
-      matrix(i, j) = data[(i + 1) * m  + (j + i + 2)];
-    }
+  const double* tmp = data + m + 2;
+  Eigen::MatrixXd matrix;
+  int i = 0;
+  while(i < n * m - 1){
+    if(i % m != 0)
+      matrix << tmp[i];
+    std::cout << tmp[i] << std::endl;
+    i++;
   }
   
   return std::move(matrix);
@@ -167,9 +170,8 @@ int main(int argc, char** argv) {
   //double A[100] = {1.0};
   //double k[3] = {-0.1};
   
-  auto matrix = create_matrix<40, 100>();
-  std::cout << matrix(3,3) << "\n";
-  return 0;
+  auto matrix = create_matrix(40, 100);
+  std::cout << matrix(3,3) << std::endl;
   
   /*Problem problem;
   for (int i = 0; i < kNumObservations; ++i) {

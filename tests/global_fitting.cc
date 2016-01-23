@@ -30,6 +30,7 @@
 
 #include "ceres/ceres.h"
 #include "glog/logging.h"
+#include "eigen3/Eigen/Dense"
 
 using ceres::AutoDiffCostFunction;
 using ceres::CostFunction;
@@ -78,7 +79,7 @@ using ceres::Solve;
 // ## ENDCODE
 // Afterwards the last colum containing the values 1234321234 is removed
 
-const int kNumObservations = 41;
+const int kNumObservations = 40;
 const double data[] = {
 0,18000,18100,18200,18300,18400,18500,18600,18700,18800,18900,19000,19100,19200,19300,19400,19500,19600,19700,19800,19900,20000,20100,20200,20300,20400,20500,20600,20700,20800,20900,21000,21100,21200,21300,21400,21500,21600,21700,21800,21900,22000,22100,22200,22300,22400,22500,22600,22700,22800,22900,23000,23100,23200,23300,23400,23500,23600,23700,23800,23900,24000,24100,24200,24300,24400,24500,24600,24700,24800,24900,25000,25100,25200,25300,25400,25500,25600,25700,25800,25900,26000,26100,26200,26300,26400,26500,26600,26700,26800,26900,27000,27100,27200,27300,27400,27500,27600,27700,27800,27900,28000,
 0,1.50454946294365,1.58372851797628,1.7302015297778,1.80914078029636,1.9199090953434,2.02693266858976,2.11942927707247,2.24386987947475,2.34029691405964,2.45010595366359,2.53984203532012,2.61982657144834,2.70590110124672,2.77456806788616,2.86955682123237,2.9123695315681,2.97963814509828,3.01892231572475,3.05743526684556,3.09277530474965,3.13127011079831,3.13959325652699,3.17125306214185,3.16556237290591,3.17018546550383,3.15211064496207,3.16833718285143,3.15345676559951,3.13812262713638,3.11357510507989,3.114356291265,3.08327030632484,3.07224295095183,3.055722788642,3.05495789103131,3.02471120887985,3.01605736566377,3.02322885529503,2.9885375872525,2.97461850469105,2.96909792681276,2.96271622735034,2.93050468838473,2.91855325024435,2.88816423575369,2.86950868476375,2.85054191397625,2.80731528223184,2.74393946425651,2.67878293194227,2.63269879926584,2.58593812853074,2.48334376627853,2.39910849833887,2.30538142343977,2.21859696370931,2.12572129811412,2.02368360937089,1.9286575386668,1.81972247083914,1.7355166910731,1.62532289095196,1.53074428522558,1.43271113727315,1.38242371766381,1.29418541251022,1.25602101065102,1.19611082594534,1.1586720679474,1.1387942313479,1.11932086554677,1.11860102580708,1.10584753279107,1.12917913807153,1.15207784852145,1.15367009746986,1.16405262535021,1.16729553521116,1.16627144450276,1.13122193717802,1.13831126156893,1.10292005464012,1.06817709286607,1.01463877908981,0.942530870740823,0.893720780747277,0.838466889068535,0.742110284598612,0.651600347245612,0.603651540614459,0.510943438716884,0.437725126629325,0.374753632931751,0.313662019089086,0.271116480727632,0.215730216759923,0.183417399380414,0.152567950926635,0.123181067438337,0.0882184884834926,0.0501374750125205,
@@ -128,10 +129,14 @@ struct ExponentialResidual {
   ExponentialResidual(double x, double y)
       : x_(x), y_(y) {}
 
-  template <typename T> bool operator()(const T* const m,
-                                        const T* const c,
+  template <typename T> bool operator()(const T* const A,
+                                        const T* const k,
                                         T* residual) const {
-    residual[0] = T(y_) - exp(m[0] * T(x_) + c[0]);
+    residual[0] = T(y_) - A[0] * exp(-k[0] * T(x_));
+    /*residual[0] = T(y_);
+    for(unsigned int i = 0; i < size_; ++i){
+      residual[0] -= A[i] * exp(- k[0] * T(x_)) + A[i] * exp(- k[1] * T(x_)) + A[i] * exp(- k[2] * T(x_));
+    }*/
     return true;
   }
 
@@ -140,30 +145,51 @@ struct ExponentialResidual {
   const double y_;
 };
 
+struct CombinedResidual{
+  
+};
+
+template<int n, int m> Eigen::Matrix<double, n, m> create_matrix(){
+  
+  Eigen::Matrix<double, n, m> matrix;
+  for(int i=0; i<n; ++i){
+    for(int j=0; j<m; ++j){
+      matrix(i, j) = data[(i + 1) * m  + (j + i + 2)];
+    }
+  }
+  
+  return std::move(matrix);
+}
+
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
 
-  double m = 0.0;
-  double c = 0.0;
-
-  Problem problem;
+  //double A[100] = {1.0};
+  //double k[3] = {-0.1};
+  
+  auto matrix = create_matrix<40, 100>();
+  std::cout << matrix(3,3) << "\n";
+  return 0;
+  
+  /*Problem problem;
   for (int i = 0; i < kNumObservations; ++i) {
     problem.AddResidualBlock(
-        new AutoDiffCostFunction<ExponentialResidual, 1, 1, 1>(
-            new ExponentialResidual(data[2 * i], data[2 * i + 1])),
+        new AutoDiffCostFunction<ExponentialResidual, 1, 100, 3>(
+            new ExponentialResidual(i, data[kNumObservations + 1 + (i + 1)])),
         NULL,
-        &m, &c);
+        &A, &k);
   }
 
   Solver::Options options;
   options.max_num_iterations = 25;
   options.linear_solver_type = ceres::DENSE_QR;
   options.minimizer_progress_to_stdout = true;
+  options.use_inner_iterations = true;
 
   Solver::Summary summary;
   Solve(options, &problem, &summary);
   std::cout << summary.BriefReport() << "\n";
-  std::cout << "Initial m: " << 0.0 << " c: " << 0.0 << "\n";
-  std::cout << "Final   m: " << m << " c: " << c << "\n";
-  return 0;
+  std::cout << "Initial A: " << 0.0 << " k: " << 0.0 << "\n";
+  std::cout << "Final   A: " << A << " k: " << k << "\n";
+  return 0;*/
 }

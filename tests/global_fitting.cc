@@ -136,8 +136,8 @@ const double data[] = {
 ceres::ConstMatrixRef matrix(data, numRows, numCols);
 
 struct ExponentialResidual {
-  ExponentialResidual(double x, double y, int ti, int ai, int lk, int ll)
-      : t_(x), y_(y), ti_(ti), ai_(ai), lk_(lk), ll_(ll) {}
+  ExponentialResidual(double t, double y, int ti, int ai, int lk, int ll)
+      : t_(t), y_(y), ti_(ti), ai_(ai), lk_(lk), ll_(ll) {}
 
   template <typename T> bool operator()(const T* const A,
                                         const T* const k,
@@ -147,7 +147,7 @@ struct ExponentialResidual {
     //std::cout <<  A[0] * exp(-k[0] * T(t_)) << std::endl;
     
     residual[0] = T(y_);
-    for(int i = 0; i < lk_; i++){
+    for(int i = 0; i < lk_; ++i){
       residual[0] -= A[ai_ + ll_ * i] * exp(-k[i] * T(t_));
     }
 
@@ -198,7 +198,7 @@ int main(int argc, char** argv) {
     for(int j = 0; j < numWavelengths; ++j){
       //for(int l = 0; l < 3; ++l){
         problem.AddResidualBlock(
-          new AutoDiffCostFunction<ExponentialResidual, 1, numWavelengths, 1>(
+          new AutoDiffCostFunction<ExponentialResidual, 1, 3 * numWavelengths, 3>(
             new ExponentialResidual(matrix(i + 1, 0), matrix(i + 1, j + 1), i, j, 3, numWavelengths)),
           NULL,
           A,
@@ -212,7 +212,7 @@ int main(int argc, char** argv) {
   options.linear_solver_type = ceres::DENSE_QR;
   options.minimizer_progress_to_stdout = true;
   options.use_inner_iterations = true;
-  //options.num_threads = 8;
+  options.num_threads = 8;
 
   Solver::Summary summary;
   Solve(options, &problem, &summary);

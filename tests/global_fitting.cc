@@ -136,25 +136,31 @@ const double data[] = {
 ceres::ConstMatrixRef matrix(data, numRows, numCols);
 
 struct ExponentialResidual {
-  ExponentialResidual(double x, double y, int a)
-      : t_(x), y_(y), a_(a) {}
+  ExponentialResidual(double x, double y, int ti, int ai, int lk, int ll)
+      : t_(x), y_(y), ti_(ti), ai_(ai), lk_(lk), ll_(ll) {}
 
   template <typename T> bool operator()(const T* const A,
                                         const T* const k,
                                         T* residual) const {
     //residual[0] = T(y_) - (A[0] * exp(-k[0] * T(t_)) + A[1] * exp(-k[1] * T(t_)) + A[2] * exp(-k[2] * T(t_)));
+    //std::cout << (double)A[0] << std::endl;
+    //std::cout <<  A[0] * exp(-k[0] * T(t_)) << std::endl;
+    
     residual[0] = T(y_);
-    for(int i=0; i < a_; ++i)
-      residual[0] -= A[i] * exp(-k[0] * T(t_));
+    for(int i = 0; i < lk_; i++){
+      residual[0] -= A[ai_ + ll_ * i] * exp(-k[i] * T(t_));
+    }
 
-                                          
     return true;
   }
 
  private:
   const double t_;
   const double y_;
-  const int a_;
+  const int ti_;
+  const int ai_;
+  const int lk_;
+  const int ll_;
 };
 
 /*struct VectorResidual {
@@ -179,19 +185,25 @@ struct ExponentialResidual {
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
   double k[3] = {0.1, 0.3, 0.35};
-  double A[numWavelengths] = {1};
+  double A[3 * numWavelengths] = {1} ;//[numWavelengths];
   Problem problem;
+  
+  /*for(int i = 0; i < 3 ; ++i){
+    for(int j = 0; j < numWavelengths ; ++j){
+        A[i][j] = 1;
+    }
+  }*/
   
   for(int i = 0; i < numTimepoints; ++i){
     for(int j = 0; j < numWavelengths; ++j){
-      for(int l = 0; l < 3; ++l){
+      //for(int l = 0; l < 3; ++l){
         problem.AddResidualBlock(
           new AutoDiffCostFunction<ExponentialResidual, 1, numWavelengths, 1>(
-            new ExponentialResidual(matrix(i + 1, 0), matrix(i + 1, j + 1), numWavelengths)),
+            new ExponentialResidual(matrix(i + 1, 0), matrix(i + 1, j + 1), i, j, 3, numWavelengths)),
           NULL,
           A,
-          k + l);
-      }
+          k);
+      //}
     }
   }
   
@@ -200,11 +212,17 @@ int main(int argc, char** argv) {
   options.linear_solver_type = ceres::DENSE_QR;
   options.minimizer_progress_to_stdout = true;
   options.use_inner_iterations = true;
-  options.num_threads = 8;
+  //options.num_threads = 8;
 
   Solver::Summary summary;
   Solve(options, &problem, &summary);
   std::cout << summary.FullReport() << "\n";
+  /*for(int i = 0; i < 3 ; ++i){
+    for(int j = 0; j < numWavelengths ; ++j){
+        std::cout << A[i][j] << " ";
+    }
+    std::cout << std::endl;
+  }*/
   //std::cout << "Initial A: " << 0.0 << " k: " << 0.0 << "\n";
   //std::cout << "Final   A: " << A << " k: " << k << "\n";
   std::cout << k[0] << " " << k[1] << " " << k[2] << std::endl;

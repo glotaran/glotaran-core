@@ -4,7 +4,7 @@
 require(TIMP) 
 
 ## simulate a 101 x 41 matrix of data
-
+set.seed(123)
 times <- seq(0, 300, by=7.5)
 wavenum <- seq(18000, 28000, by=100)
 irf = FALSE
@@ -31,7 +31,7 @@ for (i in 1:length(wavenum)) {
 #     wavenum[i], i=1, mudisp = TRUE, parmu = c(.0001,.0001), taudisp = FALSE,
 #     dispmufun = "poly")
 
-    C <- compModel (k=c(.01,.05,0.9), x=times, irfpar =irfvec, # cohirf = cohirf, 
+    C <- compModel (k=c(.005,.05,0.09), x=times, irfpar =irfvec, # cohirf = cohirf, 
     irf = irf, # cohspec = list(type = "freeirfdisp"),coh = vector(), 
     lamb = i, dataset = 1,usekin2=FALSE) 
     
@@ -43,12 +43,13 @@ PSI  <- PSI + sigma * rnorm(dim(C)[1] * dim(E)[1])
 
 # write.table(rbind(c(c(0),wavenum,c(1234321234)),cbind(times,PSI,rep(1234321234,length(times)))),
 # file='3expdata.csv',row.names = FALSE,col.names=FALSE,sep=',')
+# sed -i 's:1234321234::g' 3expdata.csv
 
 ser2 <- dat(psi.df = PSI, x = times, nt = length(times), x2 = wavenum, nl =
 length(wavenum)) 
 
 model1<- initModel(mod_type = "kin", 
-kinpar=c(.01, .05,0.8), # lambdac = 1200, 
+kinpar=c(.01, .05,0.08), # lambdac = 1200, 
 # irfpar=c(57.47680283, 1.9), 
 irf = FALSE,
 #parmu = list(c(.001,.001), c(.0001,.0001)), 

@@ -33,7 +33,7 @@
 #include "eigen3/Eigen/Dense"
 #include <Eigen/Core>
 
-using ceres::AutoDiffCostFunction;
+using ceres::DynamicAutoDiffCostFunction;
 using ceres::CostFunction;
 using ceres::Problem;
 using ceres::Solver;
@@ -62,7 +62,7 @@ using ceres::Solve;
 //dataset 1: 0.00503966786236027, 0.0496969656191525, 0.0893529159322471
 //    standard errors: 1.62787800156254e-05, 0.00039216731393182, 0.000449611960993873
 
-
+const int numRateConstants = 3;
 const int numTimepoints = 41;
 const int numWavelengths = 101;
 
@@ -119,17 +119,13 @@ struct ExponentialResidual {
   ExponentialResidual(double t, double y, int ti, int ai, int lk, int ll)
       : t_(t), y_(y), ti_(ti), ai_(ai), lk_(lk), ll_(ll) {}
 
-  template <typename T> bool operator()(const T* const k,
-                                        const T* const A,
-                                        T* residual) const {
-    //residual[0] = T(y_) - (A[0] * exp(-k[0] * T(t_)) + A[1] * exp(-k[1] * T(t_)) + A[2] * exp(-k[2] * T(t_)));
-    //std::cout << (double)A[0] << std::endl;
-    //std::cout <<  A[0] * exp(-k[0] * T(t_)) << std::endl;
-    
-    residual[0] = T(y_);
+  template <typename T> bool operator()(T const* const* parameters,
+                                        T* residuals) const {
+   residuals[0] = T(y_);
     for(int i = 0; i < lk_; ++i){
-      residual[0] -= A[ai_ + ll_ * i] * exp(-k[i] * T(t_));
+      residuals[0] -= parameters[1][ai_ + ll_ * i] * exp(-parameters[0][i] * T(t_));
     }
+   
 
     return true;
   }
@@ -143,47 +139,20 @@ struct ExponentialResidual {
   const int ll_;
 };
 
-/*struct VectorResidual {
-  VectorResidual(double* psi, int psiLength, int aLength, int kLength)
-    : psi_(psi, psiLength), psiLength_(psiLength), aLength_(aLength), kLength_(kLength) {}
-    
-    template <typename T> bool operator()(const T* const A,
-                                        const T* const k,
-                                        T* residual) const {
-      Eigen::VectorRef res(residual, psiLength_);
-      
-      return true; 
-    }
-  
-  private:
-    ceres::ConstVectorRef psi_;
-    const int psiLength_;
-    const int aLength_;
-    const int kLength_;
-};*/
-
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
-  double k[3] = {0.01 ,0.05 ,0.08 };
-  double A[3 * numWavelengths] = {1} ;//[numWavelengths];
+  double k[3] = {0.01, 0.05, 0.08};
+  double A[3 * numWavelengths] = {1};
   Problem problem;
-  
-  /*for(int i = 0; i < 3 ; ++i){
-    for(int j = 0; j < numWavelengths ; ++j){
-        A[i][j] = 1;
-    }
-  }*/
-  
+    
   for(int i = 0; i < numTimepoints; ++i){
     for(int j = 0; j < numWavelengths; ++j){
-      //for(int l = 0; l < 3; ++l){
-        problem.AddResidualBlock(
-          new AutoDiffCostFunction<ExponentialResidual, 1, 3, 3 * numWavelengths>(
-            new ExponentialResidual(matrix(i + 1, 0), matrix(i + 1, j + 1), i, j, 3, numWavelengths)),
-          NULL,
-          k,
-          A);
-      //}
+      auto costFunction = new DynamicAutoDiffCostFunction<ExponentialResidual>(
+        new ExponentialResidual(matrix(i + 1, 0), matrix(i + 1, j + 1), i, j, numRateConstants, numWavelengths));
+      costFunction->AddParameterBlock(numRateConstants);
+      costFunction->AddParameterBlock(numRateConstants * numWavelengths);
+      costFunction->SetNumResiduals(1);
+      problem.AddResidualBlock(costFunction, NULL, k, A);
     }
   }
   
@@ -202,9 +171,7 @@ int main(int argc, char** argv) {
     }
     std::cout << std::endl;
   
-  //std::cout << "Initial A: " << 0.0 << " k: " << 0.0 << "\n";
-  //std::cout << "Final   A: " << A << " k: " << k << "\n";
   std::cout << k[0] << " " << k[1] << " " << k[2] << std::endl;
-  //std::cout << matrix(numWavelengths, numTimepoints) << std::endl;//" " << matrix(2,0) << " " << matrix(3,0) << std::endl;
+  
   return 0;
 }

@@ -29,3 +29,9 @@
 
 # Personal vagrant stuff
 .vagrant
+
+# R / TIMP related stuff
+_paramEst.txt
+_selectedtraces.ps
+_summary.ps
+

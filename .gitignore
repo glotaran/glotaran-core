@@ -35,3 +35,9 @@ _paramEst.txt
 _selectedtraces.ps
 _summary.ps
 
+# build stuff
+build/
+bin/
+
+#KDE stuff
+.*kate-swp

@@ -135,17 +135,11 @@ int main(int argc, char** argv) {
   }
   std::cout << ET.transpose() << std::endl;
   
-  /*for(int i = 0; i < numRateConstants; ++i){
-    for(int j = 0; j < numWavelengths; ++j){
-      A[i * numRateConstants + j] = ET(i, j);
-    }
-  }*/
-  
   Problem problem;
     
   for(int i = 0; i < numTimepoints; ++i){
     for(int j = 0; j < numWavelengths; ++j){
-      DynamicAutoDiffCostFunction<ExponentialResidual>* costFunction = new DynamicAutoDiffCostFunction<ExponentialResidual>(
+      DynamicNumericDiffCostFunction<ExponentialResidual>* costFunction = new DynamicNumericDiffCostFunction<ExponentialResidual>(
         new ExponentialResidual(matrix(i + 1, 0), matrix(i + 1, j + 1), i, j, numRateConstants, numWavelengths));
       costFunction->AddParameterBlock(numRateConstants);
       costFunction->AddParameterBlock(numRateConstants * numWavelengths);

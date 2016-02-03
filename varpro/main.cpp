@@ -1,6 +1,7 @@
 // Author: yaminokeshin@gmail.com (Stefan Schütz)
 
 #include "ceres/ceres.h"
+#include "ceres/numeric_diff_cost_function.h"
 #include "glog/logging.h"
 #include "eigen3/Eigen/Dense"
 #include <Eigen/Core>
@@ -85,281 +86,81 @@ const double data[] = {
 ConstMatrixRef matrix(data, numRows, numCols);
 
 struct ExponentialResidual{
-  ExponentialResidual(int i, int j, ceres::Matrix& residuals) :
-   i_(i), j_(j), residuals_(residuals) {}
+  ExponentialResidual(ConstMatrixRef matrix, int l, int lt, int ll, int lk) : 
+  psi_(matrix, 1, 1, lt, ll),  T_(matrix, 1, 0, lt, 1), l_(l), lt_(lt), ll_(ll), lk_(lk){}
   
   template <typename T> bool operator()(T const* const* parameters,
                                         T* residuals) const {
-    residuals[0] = residuals_(i_, j_);
+    
+    ceres::Matrix C = ExponentialResidual::compModel(parameters[0], T_, lk_, lt_);
+    ceres::Matrix res = ExponentialResidual::compResiduals(parameters[0], psi_, C, l_, ll_, lk_);
+    for(int i = 0; i < lt_; i++)
+      residuals[i] = res(i, 0);
+    
     return true;
+    
   }
   
 private:
-  const int i_;
-  const int j_;
-  ceres::Matrix& residuals_;
   
-};
-
-class VarProIterationCallback : public IterationCallback {
-public:
-  VarProIterationCallback(double* k, int lt, int ll, int lk) : k_(k), lt_(lt), ll_(ll), lk_(lk),
-    psi_(matrix, 1, 1, lt, ll), C_(lk, lt), t_(matrix, 1, 0, lt_, 1) {
-    costFunctors_ = new ExponentialResidual*[lt * ll];
-    for(int i = 0; i < lt_; ++i){
-      for(int j = 0; j < ll_; ++j){
-        costFunctors_[i * ll_ + j] = new ExponentialResidual(i, j, residuals_);
+  static ColMajorMatrix compModel(const double* k, const Block<ConstMatrixRef>& T, const int lk, const int lt){
+    ceres::Matrix C(lt, lk);
+    for(int i = 0; i < lt; ++i){
+      for(int j = 0; j < lk; ++j){
+        C(i, j) = ceres::exp(-k[j] * T(i, 0));
       }
     }
-    compResiduals();
+    return C;
   }
   
-  ~VarProIterationCallback(){};
-  
-  CallbackReturnType operator()(const IterationSummary& summary){
-    std::cout << "test" << std::endl;
-    compResiduals();
-    return ceres::SOLVER_CONTINUE;
-  }
-  
-  ExponentialResidual* getCostFunctor(int i, int j){
-    return costFunctors_[i * ll_ + j];
-  }
-  
-private:
-  
-  void compModel(){
-    for(int i = 0; i < lk_; ++i){
-      for(int j = 0; j < lt_; ++j){
-        C_(i, j) = ceres::exp(-k_[i] * t_(j, 0));
-      }
-    } 
-  }
-  
-  void compResiduals(){
-    ConstVectorRef kVec(k_, lk_);
-    Block<ConstMatrixRef> xVec(matrix, 1, 0, lt_, 1);
+  static ceres::Matrix compResiduals(const double* k, const Block<ConstMatrixRef>& psi, ceres::Matrix& C, const int l, const int ll, const int lk){
+    ConstVectorRef kVec(k, lk);
+    ColMajorMatrix ET(lk, ll);
+    const FullPivHouseholderQR<ceres::Matrix> QR = C.fullPivHouseholderQr();
     
-    ColMajorMatrix ET(numRateConstants, numWavelengths);
-    compModel();
-    const FullPivHouseholderQR<ceres::Matrix> QR = C_.transpose().fullPivHouseholderQr();
-    
-    for(int i = 0; i < numWavelengths; ++i){
-      ET.col(i) = QR.solve(psi_.col(i));
+    for(int i = 0; i < ll; ++i){
+      ET.col(i) = QR.solve(psi.col(i));
     }
     
     ceres::Matrix Q = QR.matrixQ();
     int m =  Q.rows();
-    Block<ceres::Matrix> Q2 = Q.block(0, numRateConstants, m, m - lk_);
+    Block<ceres::Matrix> Q2 = Q.block(0, lk, m, m - lk);
     
-    residuals_ = Q2 * Q2.transpose() * psi_;
+    return Q2 * Q2.transpose() * psi.col(l);
   }
-  
-  double* k_;
-  const int lt_;
-  const int ll_;
-  const int lk_;
   
   Block<ConstMatrixRef> psi_;
-  Block<ConstMatrixRef> t_;
-  ColMajorMatrix C_;
-  ceres::Matrix residuals_;
-  ExponentialResidual** costFunctors_;
+  Block<ConstMatrixRef> T_;
   
-};
-
-/*void compModel(ColMajorMatrix& model, const VectorXd& k, const MatrixXd& t, int lk, int lt){
-  for(int i = 0; i < lk; ++i){
-    for(int j = 0; j < lt; ++j){
-      model(i, j) = ceres::exp(-k[i] * t(j, 0));
-    }
-  }
-}*/
-
-/*struct ExponentialResidual {
-  ExponentialResidual(double t, double y, int ti, int ai, int lk, int ll)
-      : t_(t), y_(y), ti_(ti), ai_(ai), lk_(lk), ll_(ll) {}
-
-  template <typename T> bool operator()(T const* const* parameters,
-                                        T* residuals) const {
-   residuals[0] = T(y_);
-    for(int i = 0; i < lk_; ++i){
-      residuals[0] -= parameters[1][ai_ + ll_ * i] * ceres::exp(-parameters[0][i] * T(t_));
-    }
-    return true;
-  }
-
- private:
-  const double t_;
-  const double y_;
-  const int ti_;
-  const int ai_;
-  const int lk_;
-  const int ll_;
-};*/
-
-/*struct ExponentialResidual {
-  ExponentialResidual(double r)
-      : r_(r) {}
-
-  template <typename T> bool operator()(T const* const* parameters,
-                                        T* residuals) const {
-   residuals[0] = r_;
-    return true;
-  }
-
- private:
-  const double r_;
   
-};*/
-
-/*struct ExponentialResidual {
-  ExponentialResidual(const double* T, const double* psi, const double* ET, int lt, int ll, int lk)
-      : T_(T), psi_(psi), ET_(ET), lt_(lt), ll_(ll), lk_(lk) {}
-
-  template <typename T> bool operator()(T const* const* parameters,
-                                        T* residuals) const {
-    /*for(int i = 0; i < ll_; ++i){
-      for(int j = 0; j < lt_; ++j){
-        residuals[i * lt_ + j] = psi_[i * lt_ + j];
-        //std::cout << "(" << i << "," << j << "): " << psi_[i * lt_ + j] << std::endl;
-        for(int k = 0; k < lk_; ++k){
-          residuals[i * lt_ + j] -= ET_[i * lk_ + k] * ceres::exp(-parameters[0][k] * T_[j]);
-        }
-        
-        //std::cout << "(" << i << "," << j << "): " << residuals[i * lt_ + j] << std::endl;
-      }
-    }//
-    for(int i = 0; i < lt_; ++i){
-      for(int j = 0; j < ll_; ++j){
-        residuals[i * ll_ + j] = psi_[i * ll_ + j];
-        for(int k = 0; k < lk_; ++k){
-          residuals[i * ll_ + j] -= ET_[i * ll_ + k] * ceres::exp(-parameters[0][k] * T_[i]);
-          //std::cout << "(" << i << "," << j << "): " << T_[i * ll_ + k] << std::endl;
-        }
-        //std::cout << "(" << i << "," << j << "): " << residuals[i * ll_ + j] << std::endl;
-      }
-    }
-    
-    return true;
-  }
-
- private:
-  const double* T_;
-  const double* psi_;
-  const double* ET_;
+  const int l_;
   const int lt_;
   const int ll_;
   const int lk_;
-};*/
+};
 
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
   double k[numRateConstants] = {0.01, 0.05, 0.08};
-  //double A[numRateConstants * numWavelengths] = {1};
-  
-  /*Block<ConstMatrixRef> psi(matrix, 1, 1, numTimepoints, numWavelengths);
-  ConstVectorRef kVec(k, numRateConstants); 
-  Block<ConstMatrixRef> xVec(matrix, 1, 0, numTimepoints, 1);
-  //std::cout << xVec(1, 0) << " " << xVec(2, 0) << std::endl;
-  ColMajorMatrix C(numRateConstants , numTimepoints);
-  compModel(C, kVec, xVec, numRateConstants, numTimepoints);
-  ColMajorMatrix ET(numRateConstants, numWavelengths);
-  
-  const FullPivHouseholderQR<ceres::Matrix> QR = C.transpose().fullPivHouseholderQr();
-  
-  //std::cout << C << std::endl;
-  
-  for(int i = 0; i < numWavelengths; ++i){
-    ET.col(i) = QR.solve(psi.col(i));
-  }
-
-  //std::cout << ET.transpose() << std::endl;
-  
-  ceres::Matrix Q = QR.matrixQ();
-  int m =  Q.rows();
-  
-  Block<ceres::Matrix> Q2 = Q.block(0, numRateConstants, m, m - numRateConstants); 
-  //std::cout << Q2 << std::endl;
-  
-  /*double* Q2d = Q2.data();
-  
-  for(int i = 0; i < Q2.cols(); ++i){
-    for(int j = 0; j < Q2.rows(); ++j){
-      std::cout << Q2d[i * Q2.cols() + j] << " ";
-    }
-  }//
-  
-  ceres::Matrix res = Q2*Q2.transpose()*psi;
-  
-  //std::cout << res << std::endl;*/
-  
   Problem problem;
-  /*double x[numTimepoints];
-  double psiD[numWavelengths * numTimepoints];
-  double ETD[numRateConstants * numWavelengths];
-  
-  for(int i = 0; i < numTimepoints; ++i)
-    x[i] = xVec(i, 0);
-  
-  for(int i = 0; i < numTimepoints; ++i){
-    for(int j = 0; j < numWavelengths; ++j){
-      psiD[i * numWavelengths + j] = psi(i, j);
-    }
+   
+  for(int i = 0; i < numWavelengths; ++i){
+    DynamicNumericDiffCostFunction<ExponentialResidual>* costFunction = new DynamicNumericDiffCostFunction<ExponentialResidual>(
+      new ExponentialResidual(matrix, i, numTimepoints, numWavelengths, numRateConstants));
+    costFunction->AddParameterBlock(numRateConstants);
+    costFunction->SetNumResiduals(numTimepoints);
+    problem.AddResidualBlock(costFunction, NULL, k);
   }
-  
-  for(int i = 0; i < numRateConstants; ++i){
-    for(int j = 0; j < numWavelengths; ++j){
-      psiD[i * numWavelengths + j] = ET(i, j);
-    }
-  }*/
-  
-  /*for(int i = 0; i < numTimepoints; ++i){
-    for(int j = 0; j < numWavelengths; ++j){
-      DynamicNumericDiffCostFunction<ExponentialResidual>* costFunction = new DynamicNumericDiffCostFunction<ExponentialResidual>(
-        new ExponentialResidual(matrix(i + 1, 0), matrix(i + 1, j + 1), i, j, numRateConstants, numWavelengths));
-      costFunction->AddParameterBlock(numRateConstants);
-      costFunction->AddParameterBlock(numRateConstants * numWavelengths);
-      costFunction->SetNumResiduals(1);
-      problem.AddResidualBlock(costFunction, NULL, k, A);
-    }
-  }*/
-  
-  /*DynamicNumericDiffCostFunction<ExponentialResidual>* costFunction = new DynamicNumericDiffCostFunction<ExponentialResidual>(
-    new ExponentialResidual(x, psiD, ETD, numTimepoints, numWavelengths, numRateConstants));
-  costFunction->AddParameterBlock(numRateConstants);
-  costFunction->SetNumResiduals(numTimepoints * numWavelengths);
-  problem.AddResidualBlock(costFunction, NULL, k);*/
-  
-  VarProIterationCallback * callback = new VarProIterationCallback(k, numTimepoints, numWavelengths, numRateConstants);
-  
-  for(int i = 0; i < numTimepoints; ++i){
-    for(int j = 0; j < numWavelengths; ++j){
-      DynamicNumericDiffCostFunction<ExponentialResidual>* costFunction = new DynamicNumericDiffCostFunction<ExponentialResidual>(
-        callback->getCostFunctor(i, j));
-      costFunction->AddParameterBlock(numRateConstants);
-      //costFunction->AddParameterBlock(numRateConstants * numWavelengths);
-      costFunction->SetNumResiduals(1);
-      problem.AddResidualBlock(costFunction, NULL, k);
-    }
-  }  
   
   Solver::Options options;
   options.max_num_iterations = 25;
   options.linear_solver_type = ceres::DENSE_QR;
   options.minimizer_progress_to_stdout = true;
-  //options.use_inner_iterations = true;
   options.num_threads = 8;
-  options.callbacks.push_back(callback);
 
   Solver::Summary summary;
   Solve(options, &problem, &summary);
   std::cout << summary.FullReport() << std::endl;
-  /*for(int j = 0; j < numWavelengths ; ++j){
-        std::cout << A[j] << " \t " << A[numWavelengths+j] << " \t " << A[2*numWavelengths+j] << " \n ";
-    }
-    std::cout << std::endl;*/
-  
   std::cout << k[0] << " " << k[1] << " " << k[2] << std::endl;
   return 0;
 }

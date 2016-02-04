@@ -114,18 +114,10 @@ private:
   }
   
   static ceres::Matrix compResiduals(const double* k, const Block<ConstMatrixRef>& psi, ceres::Matrix& C, const int l, const int ll, const int lk){
-    ConstVectorRef kVec(k, lk);
-    ColMajorMatrix ET(lk, ll);
     const FullPivHouseholderQR<ceres::Matrix> QR = C.fullPivHouseholderQr();
-    
-    for(int i = 0; i < ll; ++i){
-      ET.col(i) = QR.solve(psi.col(i));
-    }
-    
     ceres::Matrix Q = QR.matrixQ();
     int m =  Q.rows();
     Block<ceres::Matrix> Q2 = Q.block(0, lk, m, m - lk);
-    
     return Q2 * Q2.transpose() * psi.col(l);
   }
   

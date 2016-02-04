@@ -93,7 +93,7 @@ struct ExponentialResidual{
                                         T* residuals) const {
     
     ceres::Matrix C = ExponentialResidual::compModel(parameters[0], T_, lk_, lt_);
-    ceres::Matrix res = ExponentialResidual::compResiduals(parameters[0], psi_, C, l_, ll_, lk_);
+    ceres::Matrix res = ExponentialResidual::compResiduals(psi_, C, l_, ll_, lk_);
     for(int i = 0; i < lt_; i++)
       residuals[i] = res(i, 0);
     
@@ -113,7 +113,7 @@ private:
     return C;
   }
   
-  static ceres::Matrix compResiduals(const double* k, const Block<ConstMatrixRef>& psi, ceres::Matrix& C, const int l, const int ll, const int lk){
+  static ceres::Matrix compResiduals(const Block<ConstMatrixRef>& psi, ceres::Matrix& C, const int l, const int ll, const int lk){
     const FullPivHouseholderQR<ceres::Matrix> QR = C.fullPivHouseholderQr();
     ceres::Matrix Q = QR.matrixQ();
     int m =  Q.rows();

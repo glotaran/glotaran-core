@@ -26,3 +26,13 @@ sudo apt-get -y install libeigen3-dev
 sudo add-apt-repository ppa:bzindovic/suitesparse-bugfix-1319687
 sudo apt-get update
 sudo apt-get -y install libsuitesparse-dev
+
+# cloning ceres from src
+
+git clone https://ceres-solver.googlesource.com/ceres-solver
+
+mkdir ceres-bin
+cd ceres-bin
+cmake ../ceres-solver
+make -j3
+sudo make install 

@@ -1,0 +1,3 @@
+[submodule "varpro/MiLi"]
+	path = varpro/MiLi
+	url = https://github.com/MariadeAnton/MiLi.git

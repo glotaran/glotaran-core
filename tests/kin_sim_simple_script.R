@@ -22,7 +22,17 @@ E[, 3] <- amp[3] * exp( - log(2) * (2 * (wavenum - location[3])/delta[3])^2)
 PSI <- matrix(nrow=length(times), ncol = length(wavenum))
 
 kinpar <- c(.005,.05,0.09)
+startkinpar <- c(.01, .05,0.08)
 
+
+C <- compModel (k=kinpar, x=times, irfpar =irfvec, # cohirf = cohirf, 
+irf = irf, # cohspec = list(type = "freeirfdisp"),coh = vector(), 
+lamb = i, dataset = 1,usekin2=FALSE) 
+
+firstC <- compModel (k=startkinpar, x=times, irfpar =irfvec, # cohirf = cohirf, 
+irf = irf, # cohspec = list(type = "freeirfdisp"),coh = vector(), 
+lamb = i, dataset = 1,usekin2=FALSE) 
+       
 for (i in 1:length(wavenum)) {
 #     irfvec <- irfparF(irfpar = c(57.47680283, 1.9), lambdac = 1500, 
 #     lambda = wavenum[i], i=1, mudisp = TRUE, parmu = c(.001,.001), 
@@ -32,10 +42,6 @@ for (i in 1:length(wavenum)) {
 #     wavenum[i], i=1, mudisp = TRUE, parmu = c(.0001,.0001), taudisp = FALSE,
 #     dispmufun = "poly")
 
-    C <- compModel (k=kinpar, x=times, irfpar =irfvec, # cohirf = cohirf, 
-    irf = irf, # cohspec = list(type = "freeirfdisp"),coh = vector(), 
-    lamb = i, dataset = 1,usekin2=FALSE) 
-    
     PSI[,i] <- C %*% as.matrix(E[i,])    
 }    
 

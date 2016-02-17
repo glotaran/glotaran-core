@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 
+#include <mili.h>
 #include <mili/stream_utils.h>
 
 Dataset::Dataset(){
@@ -20,7 +21,7 @@ timestamps_(timestamps), wavelengths_(wavelengths), observations_(observations){
 
 
 Dataset::Dataset(std::string& file_name){
-  ifstream in(file_name);
+  std::ifstream in(file_name);
   ParseFromStream(in);
   in.close();
 }
@@ -31,7 +32,7 @@ Dataset::~Dataset(){
 
 void Dataset::ParseFromSingleVectors(std::vector<double>& timestamps, std::vector<double>& wavelengths, std::vector<std::vector<double>>& observations){
   timestamps_(timestamps.size());
-  wavelenghts_(wavelengths.size());
+  wavelengths_(wavelengths.size());
   observations_((observations.size()), (observations.at(0).size()));
   
   for(int i = 0; i < timestamps.size(); ++i){
@@ -39,7 +40,7 @@ void Dataset::ParseFromSingleVectors(std::vector<double>& timestamps, std::vecto
   }
   
   for(int i = 0; i < wavelengths.size(); ++i){
-    wavelenghts_[i] = wavelengths.at(i);
+    wavelengths_[i] = wavelengths.at(i);
   }
   
   for(int i = 1; i < observations.size(); ++i){
@@ -69,30 +70,50 @@ void Dataset::ParseFromVectorField(std::vector<std::vector<double>>& data){
 //TODO test later
 void Dataset::ParseFromStream(std::istream& in){
   std::vector<std::vector<double>> data;
-  vector<double> d;
+  std::vector<double> d;
   
-  while(in >> d){
+  /*while(in >> d){
     data.push_back(d);
     d.clear();
-  }
+  }*/
   
   ParseFromVectorField(data);
 
 }
 
-Vector& Dataset::GetTimestamps() const {
+const Vector& Dataset::GetTimestamps(){
   return timestamps_;
 }
 
-Vector& Dataset::GetWavelenghts() const {
+const Vector& Dataset::GetWavelenghts(){
   return wavelengths_;
 }
 
-ColMajorMatrix& Dataset::GetObservations() const {
+const ColMajorMatrix& Dataset::GetObservations(){
   return observations_;
 }
 
-std::ostream& operator<<(std::ostream& out, const Dataset& dataset){
+Vector& Dataset::GetRateConstants(){
+  return rateconstants_;
+}
+    
+void Dataset::SetRateConstants(Vector& rateconstants){
+  rateconstants_ = rateconstants;
+}
+    
+int Dataset::GetNumberOfTimestamps() const{
+  return timestamps_.size();
+}
+
+int Dataset::GetNumberOfWavelenghts() const{
+  return wavelengths_.size();
+}
+    
+int Dataset::GetNumberOfRateconstants() const{
+  return rateconstants_.size();
+}
+
+std::ostream& operator<<(std::ostream& out, Dataset& dataset){
   out << "Timestamps: " << dataset.GetTimestamps() << std:: endl;
   out << "Wavelengths: " << dataset.GetWavelenghts() << std::endl;
   out << "Observations: " << dataset.GetObservations() << std::endl;

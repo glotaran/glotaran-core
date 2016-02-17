@@ -16,10 +16,13 @@ Simulator(Vector& times, Vector& wavenum, Vector& irfvec, Vector& location, Vect
 times_(times), wavenum_(wavenum), irfvec_(irfvec), location_(location), delta_(delta), amp_(amp), kinpar_(kinpar), functor_(functor){
 
 }
-~Simulator();
 
-Dataset& Evaluate(){
-    return *functor_(times_, wavenum_, irfvec_, location_, delta_, amp_, kinpar_);
+~Simulator(){
+  
+}
+
+Dataset Evaluate(){
+    return (*functor_)(times_, wavenum_, irfvec_, location_, delta_, amp_, kinpar_);
 }
 
 private:

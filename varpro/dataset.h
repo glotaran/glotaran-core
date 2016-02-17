@@ -25,24 +25,26 @@ class Dataset{
     void ParseFromVectorField(std::vector<std::vector<double>>& data);
     void ParseFromStream(std::istream& in);
     
-    Vector& GetTimestamps() const;
-    Vector& GetWavelenghts() const;
-    ColMajorMatrix& GetObservations() const;
+    const Vector& GetTimestamps();
+    const Vector& GetWavelenghts();
+    const ColMajorMatrix& GetObservations();
     
+    Vector& GetRateConstants();
+    void SetRateConstants(Vector& rateconstants);
+    
+    int GetNumberOfTimestamps() const;
+    int GetNumberOfWavelenghts() const;
     int GetNumberOfRateconstants() const;
-    void SetNumberOfRateconstants(int number_of_rateconstants);
+    
     
 private:
   Vector timestamps_;
   Vector wavelengths_;
   ColMajorMatrix observations_;
-    
-  int number_of_timestamps_;
-  int number_of_wavelengths_;
-  int number_of_rateconstants_;
+  Vector rateconstants_;
 };
 
-std::ostream& operator<<(std::ostream& out, const Dataset& dataset);
+std::ostream& operator<<(std::ostream& out, Dataset& dataset);
 std::istream& operator>>(std::istream& in, Dataset& dataset);
 
 #endif // DATASET_H

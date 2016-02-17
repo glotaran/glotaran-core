@@ -6,6 +6,9 @@
 #include "eigen3/Eigen/Dense"
 #include <Eigen/Core>
 
+#include "dataset.h"
+#include "simulator.h"
+
 using namespace Eigen;
 using namespace ceres;
 
@@ -85,15 +88,19 @@ const double data[] = {
 
 ConstMatrixRef matrix(data, numRows, numCols);
 
+
+
 struct ExponentialResidual{
-  ExponentialResidual(ConstMatrixRef matrix, int l, int lt, int ll, int lk) : 
-  psi_(matrix, 1, 1, lt, ll),  T_(matrix, 1, 0, lt, 1), l_(l), lt_(lt), ll_(ll), lk_(lk){}
+  //ExponentialResidual(ConstMatrixRef matrix, int l, int lt, int ll, int lk) : 
+  //psi_(matrix, 1, 1, lt, ll),  T_(matrix, 1, 0, lt, 1), l_(l), lt_(lt), ll_(ll), lk_(lk){}
+  ExponentialResidual(Vector& timep, int l, int lt, int ll, int lk)
+  psi_()
   
   template <typename T> bool operator()(T const* const* parameters,
                                         T* residuals) const {
     
-    ceres::Matrix C = ExponentialResidual::compModel(parameters[0], T_, lk_, lt_);
-    ceres::Matrix res = ExponentialResidual::compResiduals(psi_, C, l_, ll_, lk_);
+    ceres::Matrix C = ExponentialResidual::CompModel(parameters[0], T_, lk_, lt_);
+    ceres::Matrix res = ExponentialResidual::CompResiduals(psi_, C, l_, ll_, lk_);
     for(int i = 0; i < lt_; i++)
       residuals[i] = res(i, 0);
     
@@ -103,7 +110,7 @@ struct ExponentialResidual{
   
 private:
   
-  static ColMajorMatrix compModel(const double* k, const Block<ConstMatrixRef>& T, const int lk, const int lt){
+  static ColMajorMatrix CompModel(const double* k, const Block<ConstMatrixRef>& T, const int lk, const int lt){
     ceres::Matrix C(lt, lk);
     for(int i = 0; i < lt; ++i){
       for(int j = 0; j < lk; ++j){
@@ -113,7 +120,7 @@ private:
     return C;
   }
   
-  static ceres::Matrix compResiduals(const Block<ConstMatrixRef>& psi, ceres::Matrix& C, const int l, const int ll, const int lk){
+  static ceres::Matrix CompResiduals(const Block<ConstMatrixRef>& psi, ceres::Matrix& C, const int l, const int ll, const int lk){
     const FullPivHouseholderQR<ceres::Matrix> QR = C.fullPivHouseholderQr();
     ceres::Matrix Q = QR.matrixQ();
     int m =  Q.rows();
@@ -131,9 +138,74 @@ private:
   const int lk_;
 };
 
+struct ModelFunctor{
+  Dataset operator()(Vector& times, Vector& wavenum, Vector& irfvec, Vector& location, Vector& delta, Vector& amp, Vector& kinpar){
+    //std::cout << delta << std::endl;
+    ColMajorMatrix E(wavenum.size(), location.size());
+    for(int i = 0; i < location.size(); ++i){
+      Vector loc(wavenum.size());
+      for(int j = 0; j < wavenum.size(); ++j)
+        loc[j] = location[i];
+      Vector tmp = 2 * (wavenum - loc) / delta[i]; //Needs a better name
+      //std::cout << tmp << std::endl;
+      for(int j = 0; j < tmp.size(); ++j)
+        tmp[j] = tmp[j] * tmp[j];
+      Vector tmp2 = -ceres::log(2) * tmp;
+      //std::cout << tmp2 << std::endl;
+      for(int j = 0; j < tmp2.size(); ++j)
+        tmp2[j] = ceres::exp(tmp2[j]);
+      //std::cout << tmp2 << std::endl;
+      E.col(i) = amp[i] * tmp2;
+    }
+    ColMajorMatrix C = ModelFunctor::CompModel(kinpar, times, kinpar.size(), times.size());
+    ColMajorMatrix PSI = C * E.transpose();
+    //std::cout << PSI << std::endl;
+    Dataset dataset(times, wavenum, PSI);
+    return dataset;
+  }
+  
+  static ColMajorMatrix CompModel(const Vector& k, const Vector& T, const int lk, const int lt){
+    ceres::Matrix C(lt, lk);
+    for(int i = 0; i < lt; ++i){
+      for(int j = 0; j < lk; ++j){
+        C(i, j) = ceres::exp(-k[j] * T[i]);
+      }
+    }
+    return C;
+  }
+};
+
+Vector Range(double lower, double upper, double step_size = 1.0){
+  int size =(int) ((upper - lower) / step_size) + 1;
+  Vector result(size);
+  int i = 0;
+  while (abs(upper - lower) > 1e-6){
+    result[i] = lower;
+    ++i;
+    lower += step_size;
+  }
+  result[i] = lower;
+  return result;
+}
+
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
-  double k[numRateConstants] = {0.01, 0.05, 0.08};
+  Vector times = Range(0, 300, 7.5);
+  Vector wavenum = Range(18000, 28000, 100);
+  Vector irfvec;
+  Vector location(3);
+  location << 26000, 23000, 20000;
+  Vector delta(3);
+  delta << 2000, 3000, 4000;
+  Vector amp(3);
+  amp << 1, 2, 3;
+  Vector kinpar(3);
+  kinpar << .01, .05, .09;
+  ModelFunctor* functor = new ModelFunctor();
+  Simulator<ModelFunctor> simulator(times, wavenum, irfvec, location, delta, amp, kinpar, functor);
+  Dataset dataset = simulator.Evaluate();
+  std::cout << dataset << std::endl;
+  /*double k[3] = {0.01, 0.05, 0.08};
   Problem problem;
    
   for(int i = 0; i < numWavelengths; ++i){
@@ -153,6 +225,7 @@ int main(int argc, char** argv) {
   Solver::Summary summary;
   Solve(options, &problem, &summary);
   std::cout << summary.FullReport() << std::endl;
-  std::cout << k[0] << " " << k[1] << " " << k[2] << std::endl;
+  std::cout << k[0] << " " << k[1] << " " << k[2] << std::endl;*/
+  
   return 0;
 }

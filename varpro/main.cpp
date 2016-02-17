@@ -35,7 +35,7 @@ using namespace ceres;
 //dataset 1: 0.00503966786236027, 0.0496969656191525, 0.0893529159322471
 //    standard errors: 1.62787800156254e-05, 0.00039216731393182, 0.000449611960993873
 
-const int numRateConstants = 3;
+/*const int numRateConstants = 3;
 const int numTimepoints = 41;
 const int numWavelengths = 101;
 
@@ -86,22 +86,23 @@ const double data[] = {
 300,-0.00694706950979675,0.00385280438950167,-0.00490557392788945,0.0324104000307437,-0.00414339857276744,0.0190236194155383,0.00221019626149581,0.00632960918953742,0.00856923278354857,0.00227292266943629,0.0143040278420491,0.0140405083268616,-0.0142056478859275,0.00320403216432303,0.010749462067676,-0.00828172864867604,-0.00162420204169556,-0.000966839364968627,0.00474914324361206,-0.0120843955104651,0.00911213501438882,-0.00791309291563422,-0.0168591098604953,-0.00516752969955622,-0.016484871857023,-0.00975917753709084,-0.009855287001239,0.0119708973342566,0.0143977519469134,0.00362368213439001,0.00883020818668097,-0.00503503845755963,-0.00790582648981461,0.0127910269808472,-0.0269529204193117,-0.0168849399024834,-0.00275823865229434,-0.0111244836377217,-0.0224854156432191,0.00428102828604455,0.00353211835823567,0.00210269200273039,-0.000422986478421922,0.0125848876014839,0.00871194738021151,0.00912189146375122,0.00196297673822203,-0.0125939924276489,0.0206452991013949,-0.0096586529981762,0.0109318200298433,-0.00357684998083393,-0.00576225158570696,0.0193761450826807,0.00989524803436074,0.00436621238685467,0.00693871141217212,0.0264210230044137,0.0110995338555867,-0.00514111950962091,0.0071580084160214,0.0295204379344447,0.0292498175636337,0.0152737965998078,0.0202808119292886,0.0473708410952754,0.056022271544782,0.0601182635163676,0.0850360574732139,0.0853451267542366,0.122418217305558,0.146965893886027,0.13827122029814,0.143369141288689,0.177881613041917,0.18445583817319,0.2104481788878,0.209528245480437,0.225603182097376,0.2108984153636,0.219053669226009,0.215365898070272,0.213957944182686,0.215586573569628,0.191045819560927,0.167038512024301,0.16260855162106,0.132092639009252,0.144287737697089,0.122296400399635,0.0965915935839823,0.0954652174111626,0.0839784776199034,0.0820061288048397,0.0634795384960022,0.048443276665649,0.0238506137233878,0.0215155538144549,0.0250770196883591,0.0132132252406571,0.0136832488559009
 };
 
-ConstMatrixRef matrix(data, numRows, numCols);
+ConstMatrixRef matrix(data, numRows, numCols);*/
 
 
 
 struct ExponentialResidual{
   //ExponentialResidual(ConstMatrixRef matrix, int l, int lt, int ll, int lk) : 
   //psi_(matrix, 1, 1, lt, ll),  T_(matrix, 1, 0, lt, 1), l_(l), lt_(lt), ll_(ll), lk_(lk){}
-  ExponentialResidual(Vector& timep, int l, int lt, int ll, int lk)
-  psi_()
+  ExponentialResidual(int l, Dataset& dataset) : 
+   l_(l), dataset_(dataset){}
   
   template <typename T> bool operator()(T const* const* parameters,
                                         T* residuals) const {
     
-    ceres::Matrix C = ExponentialResidual::CompModel(parameters[0], T_, lk_, lt_);
-    ceres::Matrix res = ExponentialResidual::CompResiduals(psi_, C, l_, ll_, lk_);
-    for(int i = 0; i < lt_; i++)
+    int lt = dataset_.GetNumberOfTimestamps();
+    ColMajorMatrix C = ExponentialResidual::CompModel(parameters[0], dataset_);
+    ColMajorMatrix res = ExponentialResidual::CompResiduals(l_, C, dataset_);
+    for(int i = 0; i < lt; i++)
       residuals[i] = res(i, 0);
     
     return true;
@@ -110,32 +111,33 @@ struct ExponentialResidual{
   
 private:
   
-  static ColMajorMatrix CompModel(const double* k, const Block<ConstMatrixRef>& T, const int lk, const int lt){
-    ceres::Matrix C(lt, lk);
+  static ColMajorMatrix CompModel(const double* k, const Dataset& dataset){
+    Dataset& d = const_cast<Dataset&>(dataset);
+    const int lt = d.GetNumberOfTimestamps();
+    const int lk = d.GetNumberOfRateconstants();
+    const Vector& T = d.GetTimestamps();
+    ColMajorMatrix C(lt, lk);
     for(int i = 0; i < lt; ++i){
       for(int j = 0; j < lk; ++j){
-        C(i, j) = ceres::exp(-k[j] * T(i, 0));
+        C(i, j) = ceres::exp(-k[j] * T[i]);
       }
     }
     return C;
   }
   
-  static ceres::Matrix CompResiduals(const Block<ConstMatrixRef>& psi, ceres::Matrix& C, const int l, const int ll, const int lk){
-    const FullPivHouseholderQR<ceres::Matrix> QR = C.fullPivHouseholderQr();
+  static ColMajorMatrix CompResiduals(const int l, const ColMajorMatrix& C, const Dataset& dataset){
+    Dataset& d = const_cast<Dataset&>(dataset);
+    const int lk = d.GetNumberOfRateconstants();
+    ColMajorMatrix psi = d.GetObservations();
+    const FullPivHouseholderQR<ColMajorMatrix> QR = C.fullPivHouseholderQr();
     ceres::Matrix Q = QR.matrixQ();
     int m =  Q.rows();
     Block<ceres::Matrix> Q2 = Q.block(0, lk, m, m - lk);
     return Q2 * Q2.transpose() * psi.col(l);
   }
   
-  Block<ConstMatrixRef> psi_;
-  Block<ConstMatrixRef> T_;
-  
-  
   const int l_;
-  const int lt_;
-  const int ll_;
-  const int lk_;
+  const Dataset dataset_;
 };
 
 struct ModelFunctor{
@@ -144,8 +146,7 @@ struct ModelFunctor{
     ColMajorMatrix E(wavenum.size(), location.size());
     for(int i = 0; i < location.size(); ++i){
       Vector loc(wavenum.size());
-      for(int j = 0; j < wavenum.size(); ++j)
-        loc[j] = location[i];
+      loc.setConstant(location[i]);
       Vector tmp = 2 * (wavenum - loc) / delta[i]; //Needs a better name
       //std::cout << tmp << std::endl;
       for(int j = 0; j < tmp.size(); ++j)
@@ -204,16 +205,18 @@ int main(int argc, char** argv) {
   ModelFunctor* functor = new ModelFunctor();
   Simulator<ModelFunctor> simulator(times, wavenum, irfvec, location, delta, amp, kinpar, functor);
   Dataset dataset = simulator.Evaluate();
-  std::cout << dataset << std::endl;
-  /*double k[3] = {0.01, 0.05, 0.08};
+  Vector k(3);
+  k << 0.01, 0.05, 0.08;
+  dataset.SetRateConstants(k);
+  //double k[3] = {0.01, 0.05, 0.08};
   Problem problem;
    
-  for(int i = 0; i < numWavelengths; ++i){
+  for(int i = 0; i < dataset.GetNumberOfWavelenghts(); ++i){
     DynamicNumericDiffCostFunction<ExponentialResidual>* costFunction = new DynamicNumericDiffCostFunction<ExponentialResidual>(
-      new ExponentialResidual(matrix, i, numTimepoints, numWavelengths, numRateConstants));
-    costFunction->AddParameterBlock(numRateConstants);
-    costFunction->SetNumResiduals(numTimepoints);
-    problem.AddResidualBlock(costFunction, NULL, k);
+      new ExponentialResidual(i, dataset));
+    costFunction->AddParameterBlock(dataset.GetNumberOfRateconstants());
+    costFunction->SetNumResiduals(dataset.GetNumberOfTimestamps());
+    problem.AddResidualBlock(costFunction, NULL, k.data());
   }
   
   Solver::Options options;
@@ -225,7 +228,7 @@ int main(int argc, char** argv) {
   Solver::Summary summary;
   Solve(options, &problem, &summary);
   std::cout << summary.FullReport() << std::endl;
-  std::cout << k[0] << " " << k[1] << " " << k[2] << std::endl;*/
+  std::cout << k[0] << " " << k[1] << " " << k[2] << std::endl;
   
   return 0;
 }

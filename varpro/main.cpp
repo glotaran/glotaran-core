@@ -1,5 +1,7 @@
 // Author: yaminokeshin@gmail.com (Stefan Schütz)
 
+#include <cstring>
+
 #include "ceres/ceres.h"
 #include "ceres/numeric_diff_cost_function.h"
 #include "glog/logging.h"
@@ -8,6 +10,7 @@
 
 #include "dataset.h"
 #include "simulator.h"
+#include "lapack.h"
 
 using namespace Eigen;
 using namespace ceres;
@@ -129,11 +132,24 @@ private:
     Dataset& d = const_cast<Dataset&>(dataset);
     const int lk = d.GetNumberOfRateconstants();
     ColMajorMatrix psi = d.GetObservations();
-    const FullPivHouseholderQR<ColMajorMatrix> QR = C.fullPivHouseholderQr();
+    /*const FullPivHouseholderQR<ColMajorMatrix> QR = C.fullPivHouseholderQr();
     ceres::Matrix Q = QR.matrixQ();
     int m =  Q.rows();
     Block<ceres::Matrix> Q2 = Q.block(0, lk, m, m - lk);
-    return Q2 * Q2.transpose() * psi.col(l);
+    return Q2 * Q2.transpose() * psi.col(l);*/
+    Vector b = psi.col(l);
+    int num_rows_res;
+    int num_cols_res;
+    double* res;
+    
+    int info = LAPACK::GetResidualsUsingQR(C.rows(), C.cols(), b.rows(), b.cols(), C.data(), b.data(), &num_rows_res, &num_cols_res, res);
+      
+    for(int i = 0; i< num_rows_res * num_cols_res; ++i)
+      std::cout << res[i] << " ";
+    std::cout << std::endl << info << std::endl;
+    ColMajorMatrix residuals;
+    return residuals;
+        
   }
   
   const int l_;
@@ -223,7 +239,7 @@ int main(int argc, char** argv) {
   options.max_num_iterations = 25;
   options.linear_solver_type = ceres::DENSE_QR;
   options.minimizer_progress_to_stdout = true;
-  options.num_threads = 8;
+  options.num_threads = 1;
 
   Solver::Summary summary;
   Solve(options, &problem, &summary);

@@ -25,11 +25,11 @@ class Dataset{
     void ParseFromVectorField(std::vector<std::vector<double>>& data);
     void ParseFromStream(std::istream& in);
     
-    const Vector& GetTimestamps();
-    const Vector& GetWavelenghts();
-    const ColMajorMatrix& GetObservations();
+    const Vector GetTimestamps();
+    const Vector GetWavelenghts();
+    const ColMajorMatrix GetObservations();
     
-    Vector& GetRateConstants();
+    Vector GetRateConstants();
     void SetRateConstants(Vector& rateconstants);
     
     int GetNumberOfTimestamps() const;

@@ -81,20 +81,20 @@ void Dataset::ParseFromStream(std::istream& in){
 
 }
 
-const Vector& Dataset::GetTimestamps(){
-  return timestamps_;
+const Vector Dataset::GetTimestamps(){
+  return Vector(timestamps_);
 }
 
-const Vector& Dataset::GetWavelenghts(){
-  return wavelengths_;
+const Vector Dataset::GetWavelenghts(){
+  return Vector(wavelengths_);
 }
 
-const ColMajorMatrix& Dataset::GetObservations(){
-  return observations_;
+const ColMajorMatrix Dataset::GetObservations(){
+  return ColMajorMatrix(observations_);
 }
 
-Vector& Dataset::GetRateConstants(){
-  return rateconstants_;
+Vector Dataset::GetRateConstants(){
+  return Vector(rateconstants_);
 }
     
 void Dataset::SetRateConstants(Vector& rateconstants){

@@ -1,6 +1,9 @@
 #include "lapack.h"
 #include <algorithm>
 
+#include <iostream>
+#include <cstring>
+
 extern "C" void dgeqrf_(int* m,
                    int* n,
                    double* a,
@@ -24,7 +27,7 @@ extern "C" void dormqr_(char* side,
                    int* lwork,
                    int* info);
 
-int LAPACK::GetResidualsUsingQR(int num_rows_a, int num_cols_a, int num_rows_b, int num_cols_b, const double* A, const double* b, int* num_rows_res, int* num_cols_res, double* res)
+int LAPACK::GetResidualsUsingQR(int num_rows_a, int num_cols_a, int num_rows_b, int num_cols_b, const double* A, const double* b)
 {
   double* mutable_a = const_cast<double*>(A);
   double* mutable_b = const_cast<double*>(b);
@@ -61,18 +64,7 @@ int LAPACK::GetResidualsUsingQR(int num_rows_a, int num_cols_a, int num_rows_b, 
   
   trans = 'N';
   
-  /*WARNING The values probably go wrong at this second call
-   * see http://www.netlib.org/lapack/lug/node40.html
-   */
   dormqr_(&side, &trans, &num_rows_b, &num_cols_b, &k, mutable_a, &num_rows_b, tau, mutable_b, &num_rows_b, work, &lwork, &info);
-  
-  if(info < 0)
-    return info;
-  
-  *num_rows_res = num_rows_b;
-  *num_cols_res = num_cols_b;
-  
-  res = mutable_b;
   
   return info;
 }

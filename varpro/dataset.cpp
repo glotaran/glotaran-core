@@ -3,9 +3,6 @@
 #include <iostream>
 #include <fstream>
 
-#include <mili.h>
-#include <mili/stream_utils.h>
-
 Dataset::Dataset(){
 
 }

@@ -91,25 +91,20 @@ private:
 
 struct ModelFunctor{
   Dataset operator()(Vector& times, Vector& wavenum, Vector& irfvec, Vector& location, Vector& delta, Vector& amp, Vector& kinpar){
-    //std::cout << delta << std::endl;
     ColMajorMatrix E(wavenum.size(), location.size());
     for(int i = 0; i < location.size(); ++i){
       Vector loc(wavenum.size());
       loc.setConstant(location[i]);
       Vector tmp = 2 * (wavenum - loc) / delta[i]; //Needs a better name
-      //std::cout << tmp << std::endl;
       for(int j = 0; j < tmp.size(); ++j)
         tmp[j] = tmp[j] * tmp[j];
       Vector tmp2 = -ceres::log(2) * tmp;
-      //std::cout << tmp2 << std::endl;
       for(int j = 0; j < tmp2.size(); ++j)
         tmp2[j] = ceres::exp(tmp2[j]);
-      //std::cout << tmp2 << std::endl;
       E.col(i) = amp[i] * tmp2;
     }
     ColMajorMatrix C = ModelFunctor::CompModel(kinpar, times, kinpar.size(), times.size());
     ColMajorMatrix PSI = C * E.transpose();
-    //std::cout << PSI << std::endl;
     Dataset dataset(times, wavenum, PSI);
     return dataset;
   }
@@ -140,22 +135,22 @@ Vector Range(double lower, double upper, double step_size = 1.0){
 
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
-  Vector times = Range(0, 300, 7.5);
-  Vector wavenum = Range(18000, 28000, 100);
+  Vector times = Range(0, 1500, 1.5);
+  Vector wavenum = Range(12820, 15120, 4.6);
   Vector irfvec;
-  Vector location(3);
-  location << 26000, 23000, 20000;
-  Vector delta(3);
-  delta << 2000, 3000, 4000;
-  Vector amp(3);
-  amp << 1, 2, 3;
-  Vector kinpar(3);
-  kinpar << .01, .05, .09;
+  Vector location(6);
+  location << 14705, 13513, 14492, 14388, 14184, 13986;
+  Vector delta(6);
+  delta << 400, 1000, 300, 200, 350, 330;
+  Vector amp(6);
+  amp << 1, 0.2, 1, 1, 1, 1;
+  Vector kinpar(6);
+  kinpar << .006667, .006667, 0.00333, 0.00035, 0.0303, 0.000909;
   ModelFunctor* functor = new ModelFunctor();
   Simulator<ModelFunctor> simulator(times, wavenum, irfvec, location, delta, amp, kinpar, functor);
   Dataset dataset = simulator.Evaluate();
-  Vector k(3);
-  k << 0.01, 0.05, 0.08;
+  Vector k(5);
+  k << .005, 0.003, 0.00022, 0.0300, 0.000888;
   dataset.SetRateConstants(k);
   //double k[3] = {0.01, 0.05, 0.08};
   Problem problem;
@@ -177,7 +172,7 @@ int main(int argc, char** argv) {
   Solver::Summary summary;
   Solve(options, &problem, &summary);
   std::cout << summary.FullReport() << std::endl;
-  std::cout << k[0] << " " << k[1] << " " << k[2] << std::endl;
+  std::cout << k << std::endl;
   
   return 0;
 }

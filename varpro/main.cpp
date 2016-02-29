@@ -46,11 +46,17 @@ struct ExponentialResidual{
   template <typename T> bool operator()(T const* const* parameters,
                                         T* residuals) const {
     
-    int lt = dataset_.GetNumberOfTimestamps();
+    Dataset& d = const_cast<Dataset&>(dataset_);
+    int lt = d.GetNumberOfTimestamps();
+    
     ColMajorMatrix C = ExponentialResidual::CompModel(parameters[0], dataset_);
-    Vector res = ExponentialResidual::CompResiduals(l_, C, dataset_);
+    
+    const ColMajorMatrix& psi = d.GetObservations();
+    Vector b = psi.col(l_);
+    
+    Vector res = ExponentialResidual::CompResiduals(b, C, dataset_);
     for(int i = 0; i < lt; i++)
-      residuals[i] = res[i];//, 0);
+      residuals[i] = res[i];
     
     return true;
     
@@ -72,17 +78,9 @@ private:
     return C;
   }
   
-  static Vector CompResiduals(const int l, const ColMajorMatrix& C, const Dataset& dataset){
-    Dataset& d = const_cast<Dataset&>(dataset);
-    const int lk = d.GetNumberOfRateconstants();
-    ColMajorMatrix psi = d.GetObservations();
-
-    Vector b = psi.col(l);
-    
+  static Vector CompResiduals(const Vector& b, const ColMajorMatrix& C, const Dataset& dataset){   
     LAPACK::GetResidualsUsingQR(C.rows(), C.cols(), b.rows(), b.cols(), C.data(), b.data());
-    
     return b;
-        
   }
   
   const int l_;
@@ -152,7 +150,6 @@ int main(int argc, char** argv) {
   Vector k(5);
   k << .005, 0.003, 0.00022, 0.0300, 0.000888;
   dataset.SetRateConstants(k);
-  //double k[3] = {0.01, 0.05, 0.08};
   Problem problem;
    
   for(int i = 0; i < dataset.GetNumberOfWavelenghts(); ++i){
@@ -168,6 +165,7 @@ int main(int argc, char** argv) {
   options.linear_solver_type = ceres::DENSE_QR;
   options.minimizer_progress_to_stdout = true;
   options.num_threads = 8;
+  
 
   Solver::Summary summary;
   Solve(options, &problem, &summary);

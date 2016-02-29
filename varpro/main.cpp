@@ -89,6 +89,9 @@ private:
 };
 
 struct ModelFunctor{
+  ModelFunctor(bool noise=false) : 
+  noise_(noise){}
+  
   Dataset operator()(Vector& times, Vector& wavenum, Vector& irfvec, Vector& location, Vector& delta, Vector& amp, Vector& kinpar){
     ColMajorMatrix E(wavenum.size(), location.size());
     
@@ -109,9 +112,12 @@ struct ModelFunctor{
     ColMajorMatrix C = ModelFunctor::CompModel(kinpar, times, kinpar.size(), times.size());
     ColMajorMatrix PSI = C * E.transpose();
     
-    for(int i = 0; i < PSI.rows(); ++i){
-      for(int j = 0; j < PSI.cols(); ++j){
-        PSI(i, j) += 0.005 * d(gen);
+    
+    if(noise_){
+      for(int i = 0; i < PSI.rows(); ++i){
+        for(int j = 0; j < PSI.cols(); ++j){
+          PSI(i, j) += 0.005 * d(gen);
+        }
       }
     }
     
@@ -128,6 +134,10 @@ struct ModelFunctor{
     }
     return C;
   }
+  
+private:
+  bool noise_;
+  
 };
 
 Vector Range(double lower, double upper, double step_size = 1.0){
@@ -156,7 +166,7 @@ int main(int argc, char** argv) {
   amp << 1, 0.2, 1, 1, 1, 1;
   Vector kinpar(6);
   kinpar << .006667, .006667, 0.00333, 0.00035, 0.0303, 0.000909;
-  ModelFunctor* functor = new ModelFunctor();
+  ModelFunctor* functor = new ModelFunctor(true);
   Simulator<ModelFunctor> simulator(times, wavenum, irfvec, location, delta, amp, kinpar, functor);
   Dataset dataset = simulator.Evaluate();
   Vector k(5);
@@ -177,6 +187,7 @@ int main(int argc, char** argv) {
   options.linear_solver_type = ceres::DENSE_QR;
   options.minimizer_progress_to_stdout = true;
   options.num_threads = 8;
+  options.parameter_tolerance = 1e-30;
   
 
   Solver::Summary summary;

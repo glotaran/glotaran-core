@@ -1,8 +1,6 @@
 #include "lapack.h"
-#include <algorithm>
 
-#include <iostream>
-#include <cstring>
+#include <algorithm>
 
 extern "C" void dgeqrf_(int* m,
                    int* n,

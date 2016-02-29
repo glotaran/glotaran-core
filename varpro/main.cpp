@@ -1,6 +1,7 @@
 // Author: yaminokeshin@gmail.com (Stefan Schütz)
 
 #include <cstring>
+#include <random>
 
 #include "ceres/ceres.h"
 #include "ceres/numeric_diff_cost_function.h"
@@ -90,6 +91,10 @@ private:
 struct ModelFunctor{
   Dataset operator()(Vector& times, Vector& wavenum, Vector& irfvec, Vector& location, Vector& delta, Vector& amp, Vector& kinpar){
     ColMajorMatrix E(wavenum.size(), location.size());
+    
+    std::mt19937 gen(123.0);
+    std::normal_distribution<double> d;
+    
     for(int i = 0; i < location.size(); ++i){
       Vector loc(wavenum.size());
       loc.setConstant(location[i]);
@@ -103,6 +108,13 @@ struct ModelFunctor{
     }
     ColMajorMatrix C = ModelFunctor::CompModel(kinpar, times, kinpar.size(), times.size());
     ColMajorMatrix PSI = C * E.transpose();
+    
+    for(int i = 0; i < PSI.rows(); ++i){
+      for(int j = 0; j < PSI.cols(); ++j){
+        PSI(i, j) += 0.005 * d(gen);
+      }
+    }
+    
     Dataset dataset(times, wavenum, PSI);
     return dataset;
   }

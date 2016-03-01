@@ -166,7 +166,7 @@ int main(int argc, char** argv) {
   amp << 1, 0.2, 1, 1, 1, 1;
   Vector kinpar(6);
   kinpar << .006667, .006667, 0.00333, 0.00035, 0.0303, 0.000909;
-  ModelFunctor* functor = new ModelFunctor(true);
+  ModelFunctor* functor = new ModelFunctor(false);
   Simulator<ModelFunctor> simulator(times, wavenum, irfvec, location, delta, amp, kinpar, functor);
   Dataset dataset = simulator.Evaluate();
   Vector k(5);
@@ -187,6 +187,8 @@ int main(int argc, char** argv) {
   options.linear_solver_type = ceres::DENSE_QR;
   options.minimizer_progress_to_stdout = true;
   options.num_threads = 8;
+  options.gradient_tolerance = 1e-30;
+  options.function_tolerance = 1e-30;
   options.parameter_tolerance = 1e-30;
   
 

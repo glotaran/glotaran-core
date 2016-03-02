@@ -47,6 +47,7 @@ for (i in 1:length(wavenum)) {
 }    
 
 sigma <- .005
+sigma <- .000
 psisim  <- psisim + sigma * rnorm(dim(C)[1] * dim(E)[1])
 
 # First use variable projection to calculate the conditional linear 
@@ -82,10 +83,13 @@ seqmod=FALSE, # cohspec = list(type="freeirfdisp"),
 makeps="Simulate data", title="sim-large")
 
 ## fit the model 
-
+ptm <- proc.time()
 serRes<-fitModel(list(ser2), list(model1), 
 opt=kinopt(iter=11, xlab = "time (ps)", 
 ylab = "wavelength", selectedtraces = seq(1,256,by=20), plot = TRUE))
+#your function here
+print(sprintf("Time taken: %f", (proc.time() - ptm)[3]))
+
 
 # compare the results with the varpro we did earlier
 dev.new()

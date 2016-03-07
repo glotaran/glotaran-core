@@ -90,6 +90,10 @@ const ColMajorMatrix& Dataset::GetObservations(){
   return observations_;
 }
 
+const Vector& Dataset::GetIRFVector(){
+  return irfvec_;
+}
+
 Vector& Dataset::GetRateConstants(){
   return rateconstants_;
 }
@@ -97,7 +101,11 @@ Vector& Dataset::GetRateConstants(){
 void Dataset::SetRateConstants(Vector& rateconstants){
   rateconstants_ = rateconstants;
 }
-    
+
+void Dataset::SetIRFVector(Vector& irfvec){
+  irfvec_ = irfvec;
+}
+
 int Dataset::GetNumberOfTimestamps() const{
   return timestamps_.size();
 }

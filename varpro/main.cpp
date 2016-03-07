@@ -1,5 +1,6 @@
 // Author: yaminokeshin@gmail.com (Stefan Schütz)
 
+#include <algorithm>
 #include <cstring>
 #include <random>
 
@@ -12,6 +13,9 @@
 #include "dataset.h"
 #include "simulator.h"
 #include "lapack.h"
+
+extern "C" void calcCirf(double *cmat, double *k, double *x, double *tau, double *mu,
+              int *lenk, int *lenx);
 
 using namespace Eigen;
 using namespace ceres;
@@ -50,7 +54,11 @@ struct ExponentialResidual{
     Dataset& d = const_cast<Dataset&>(dataset_);
     int lt = d.GetNumberOfTimestamps();
     
-    ColMajorMatrix C = ExponentialResidual::CompModel(parameters[0], dataset_);
+    ColMajorMatrix C;
+    if(d.GetIRFVector().size() == 0)
+      C = ExponentialResidual::CalcC(parameters[0], dataset_);
+    else
+      C = ExponentialResidual::CalcCirf(parameters[0], dataset_);
     
     const ColMajorMatrix& psi = d.GetObservations();
     Vector b = psi.col(l_);
@@ -65,7 +73,7 @@ struct ExponentialResidual{
   
 private:
   
-  static ColMajorMatrix CompModel(const double* k, const Dataset& dataset){
+  static ColMajorMatrix CalcC(const double* k, const Dataset& dataset){
     Dataset& d = const_cast<Dataset&>(dataset);
     const int lt = d.GetNumberOfTimestamps();
     const int lk = d.GetNumberOfRateconstants();
@@ -76,6 +84,21 @@ private:
         C(i, j) = ceres::exp(-k[j] * T[i]);
       }
     }
+    return C;
+  }
+  
+  static ColMajorMatrix CalcCirf(const double* k, const Dataset& dataset){
+    Dataset& d = const_cast<Dataset&>(dataset);
+    int lt = d.GetNumberOfTimestamps();
+    int lk = d.GetNumberOfRateconstants();
+    const Vector& T = d.GetTimestamps();
+    double mu = d.GetIRFVector()[0];
+    double tau = d.GetIRFVector()[1];
+    ColMajorMatrix C(lt, lk);
+    double* mutable_k = const_cast<double*>(k);
+    Vector& mutable_T = const_cast<Vector&>(T);
+    
+    calcCirf(C.data(), mutable_k, mutable_T.data(), &tau, &mu, &lk, &lt);
     return C;
   }
   
@@ -109,7 +132,11 @@ struct ModelFunctor{
         tmp2[j] = ceres::exp(tmp2[j]);
       E.col(i) = amp[i] * tmp2;
     }
-    ColMajorMatrix C = ModelFunctor::CompModel(kinpar, times, kinpar.size(), times.size());
+    ColMajorMatrix C;
+    if(irfvec.size() == 0)
+      C = ModelFunctor::CalcC(kinpar, times);
+    else
+      C = ModelFunctor::CalcCirf(kinpar, times, irfvec);
     ColMajorMatrix PSI = C * E.transpose();
     
     
@@ -125,13 +152,27 @@ struct ModelFunctor{
     return dataset;
   }
   
-  static ColMajorMatrix CompModel(const Vector& k, const Vector& T, const int lk, const int lt){
-    ceres::Matrix C(lt, lk);
+  static ColMajorMatrix CalcC(const Vector& k, const Vector& T){
+    int lk = k.size();
+    int lt = T.size();
+    ColMajorMatrix C(lt, lk);
     for(int i = 0; i < lt; ++i){
       for(int j = 0; j < lk; ++j){
         C(i, j) = ceres::exp(-k[j] * T[i]);
       }
     }
+    return C;
+  }
+  
+  static ColMajorMatrix CalcCirf(const Vector& k, const Vector& T, const Vector& irfvec){
+    int lk = k.size();
+    int lt = T.size();
+    double mu = irfvec[0];
+    double tau = irfvec[1];
+    ColMajorMatrix C(lt, lk);
+    Vector& mutable_k = const_cast<Vector&>(k);
+    Vector& mutable_T = const_cast<Vector&>(T);
+    calcCirf(C.data(), mutable_k.data(), mutable_T.data(), &tau, &mu, &lk, &lt);
     return C;
   }
   
@@ -143,21 +184,20 @@ private:
 Vector Range(double lower, double upper, double step_size = 1.0){
   int size =(int) ((upper - lower) / step_size) + 1;
   Vector result(size);
-  int i = 0;
-  while (abs(upper - lower) > 1e-6){
-    result[i] = lower;
-    ++i;
-    lower += step_size;
-  }
-  result[i] = lower;
+  std::generate(result.data(), result.data() + size, [&lower, &step_size]{return lower += step_size;});
   return result;
 }
 
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
-  Vector times = Range(0, 1500, 1.5);
+  Vector times1 = Range(-0.5, 9.98, 0.02);
+  Vector times2 = Range(10, 1500, 3.0);
+  Vector times(times1.size() + times2.size());
+  times << times1, times2;
+  //Vector times = Range(0, 1500, 1.5);
   Vector wavenum = Range(12820, 15120, 4.6);
-  Vector irfvec;
+  Vector irfvec(2);
+  irfvec << -0.02, 0.05;
   Vector location(6);
   location << 14705, 13513, 14492, 14388, 14184, 13986;
   Vector delta(6);
@@ -166,12 +206,13 @@ int main(int argc, char** argv) {
   amp << 1, 0.2, 1, 1, 1, 1;
   Vector kinpar(6);
   kinpar << .006667, .006667, 0.00333, 0.00035, 0.0303, 0.000909;
-  ModelFunctor* functor = new ModelFunctor(false);
+  ModelFunctor* functor = new ModelFunctor();
   Simulator<ModelFunctor> simulator(times, wavenum, irfvec, location, delta, amp, kinpar, functor);
   Dataset dataset = simulator.Evaluate();
   Vector k(5);
   k << .005, 0.003, 0.00022, 0.0300, 0.000888;
   dataset.SetRateConstants(k);
+  dataset.SetIRFVector(irfvec);
   Problem problem;
    
   for(int i = 0; i < dataset.GetNumberOfWavelenghts(); ++i){

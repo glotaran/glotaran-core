@@ -28,9 +28,11 @@ class Dataset{
     const Vector& GetTimestamps();
     const Vector& GetWavelenghts();
     const ColMajorMatrix& GetObservations();
+    const Vector& GetIRFVector();
     
     Vector& GetRateConstants();
     void SetRateConstants(Vector& rateconstants);
+    void SetIRFVector(Vector& irfvec);
     
     int GetNumberOfTimestamps() const;
     int GetNumberOfWavelenghts() const;
@@ -42,6 +44,7 @@ private:
   Vector wavelengths_;
   ColMajorMatrix observations_;
   Vector rateconstants_;
+  Vector irfvec_;
 };
 
 std::ostream& operator<<(std::ostream& out, Dataset& dataset);

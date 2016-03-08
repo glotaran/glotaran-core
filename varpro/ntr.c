@@ -3,6 +3,7 @@
    generates two calls to the exponential function instead of one.  */
 
 #include <math.h>
+#include <float.h>
 
 static double P[] = {
   2.46196981473530512524E-10,
@@ -203,7 +204,7 @@ void calcCirf(double *cmat, double *k, double *x, double *tau, double *mu,
   len = (*lenk) * (*lenx);
         
   for(i = 0; i < len; i++){
-    if(k[col_cnt] < 1e-6)
+    if(k[col_cnt] < DBL_EPSILON)
       cmat[i] = 0;
     else {
       alpha = (k[col_cnt] * (*tau)) / sqrt(2);
@@ -239,7 +240,7 @@ void calcCirf_multi(double *cmat, double *k, double *x, double *tau,
   
   for(i = 0; i < len; i++){
       
-    if(k[col_cnt] < 1e-6)
+    if(k[col_cnt] < DBL_EPSILON)
       cmat[i] = 0;
     else {
            

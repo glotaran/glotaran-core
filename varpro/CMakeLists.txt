@@ -6,10 +6,15 @@ include_directories(${CERES_INCLUDE_DIRS})
 
 find_package(LAPACK REQUIRED)
 
-add_executable(varpro main.cpp dataset.cpp lapack.cpp)
-target_link_libraries(varpro ${CERES_LIBRARIES})
-target_link_libraries(varpro ${LAPACK_LIBRARIES})
+#add_executable(varpro main.cpp dataset.cpp lapack.cpp ntr.c)
 
-set_property(TARGET varpro PROPERTY CXX_STANDARD 11)
+file(GLOB srcs src/*.cpp)
 
-install(TARGETS varpro RUNTIME DESTINATION bin)
+add_library(${PROJECT_NAME} SHARED ${srcs})
+target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+target_link_libraries(${PROJECT_NAME} ${CERES_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${LAPACK_LIBRARIES})
+
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
+add_subdirectory(examples)

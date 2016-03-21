@@ -14,29 +14,29 @@ using ceres::ColMajorMatrix;
 class Dataset{
   public:
     Dataset();
-    Dataset(int number_of_rateconstants);
-    Dataset(Vector& timestamps, Vector& wavelengths, ColMajorMatrix& observations);
-    Dataset(std::vector<std::vector<double>>& data);
-    Dataset(std::string& file_name);
-    
     ~Dataset();
     
-    void ParseFromSingleVectors(std::vector<double>& timestamps, std::vector<double>& wavelengths, std::vector<std::vector<double>>& observations);
-    void ParseFromVectorField(std::vector<std::vector<double>>& data);
-    void ParseFromStream(std::istream& in);
+    const double* GetTimestamps();
+    void SetTimeStamps(double* timestamps, int length, bool copy=false);
     
-    const Vector& GetTimestamps();
-    const Vector& GetWavelenghts();
-    const ColMajorMatrix& GetObservations();
-    const Vector& GetIRFVector();
+    const double* GetWavelenghts();
+    void SetWavelengths(double* wavelengths, int length, bool copy=false);
     
-    Vector& GetRateConstants();
-    void SetRateConstants(Vector& rateconstants);
-    void SetIRFVector(Vector& irfvec);
+    const double* GetObservations();
+    void SetObservations(double* observations, int num_rows, int num_cols, bool copy=false);
+    
+    double* GetIRFVector();
+    void SetIRFVector(double* irfvec, int length, bool copy=false);
+    
+    double* GetRateConstants();
+    void SetRateConstants(double* rateconstants, int length, bool copy=false);
     
     int GetNumberOfTimestamps() const;
     int GetNumberOfWavelenghts() const;
+    std::pair<int, int> GetSizeOfObservations();
+    void GetSizeOfObservations(int* num_rows, int* num_cols);
     int GetNumberOfRateconstants() const;
+    
     
     
 private:
@@ -46,8 +46,5 @@ private:
   Vector rateconstants_;
   Vector irfvec_;
 };
-
-std::ostream& operator<<(std::ostream& out, Dataset& dataset);
-std::istream& operator>>(std::istream& in, Dataset& dataset);
 
 #endif // DATASET_H

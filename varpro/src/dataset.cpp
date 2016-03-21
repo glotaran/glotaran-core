@@ -8,7 +8,7 @@ Dataset::Dataset(){
 }
 
 Dataset::~Dataset(){
-  
+  delete number_of_observation_rows;
 }
 
 const double* Dataset::GetTimestamps()
@@ -39,18 +39,31 @@ void Dataset::SetWavelengths(double* wavelengths, int length, bool copy)
     wavelengths_ = w;
 }
 
-const double* Dataset::GetObservations()
+double** Dataset::GetObservations()
 {
-  return observations_.data();
+  return observations_;
 }
 
-void Dataset::SetObservations(double* observations, int num_rows, int num_cols, bool copy)
+void Dataset::SetObservations(double** observations, int* num_rows, int num_cols, bool copy)
 {
-  ColMajorMatrix o = Eigen::Map<Eigen::MatrixXd>(observations, num_rows, num_cols);
-  if(copy)
-    observations_ = ColMajorMatrix(o);
+  if(copy){
+    observations_ = new double*[num_cols];
+    for(int i = 0; i < num_cols; ++i){
+      observations_[i] = new double[num_rows[i]];
+      for(int j = 0; j < num_rows[i]; ++j)
+        observations_[i][j]=observations[i][j];
+    }
+  }
   else
-    observations_ = o;
+    observations_ = observations;
+  
+  number_of_observation_rows = new int[num_cols];
+  
+  for(int i = 0; i < num_cols; ++i)
+    number_of_observation_rows[i] = num_rows[i];
+  
+  number_of_observation_cols = num_cols;
+  
 }
 
 double* Dataset::GetIRFVector()
@@ -89,15 +102,10 @@ int Dataset::GetNumberOfWavelenghts() const{
   return wavelengths_.size();
 }
 
-std::pair<int, int> Dataset::GetSizeOfObservations()
+void Dataset::GetSizeOfObservations(int** num_rows, int* num_cols)
 {
-  return std::make_pair<int, int>(observations_.rows(), observations_.cols());
-}
-
-void Dataset::GetSizeOfObservations(int* num_rows, int* num_cols)
-{
-  *num_rows = observations_.rows();
-  *num_cols = observations_.cols();
+  *num_rows = number_of_observation_rows;
+  *num_cols = number_of_observation_cols;
 }
 
 int Dataset::GetNumberOfRateconstants() const{

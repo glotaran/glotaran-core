@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+using VarPro::LAPACK;
+
 extern "C" void dgeqrf_(int* m,
                    int* n,
                    double* a,

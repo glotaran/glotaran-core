@@ -3,6 +3,8 @@
 #include <iostream>
 #include <fstream>
 
+using VarPro::Dataset;
+
 Dataset::Dataset(){
 
 }

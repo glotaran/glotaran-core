@@ -4,7 +4,7 @@
 #include <ceres/ceres.h>
 
 #include "dataset.h"
-
+#include "options.h"
 using ceres::Vector;
 using ceres::internal::scoped_ptr;
 

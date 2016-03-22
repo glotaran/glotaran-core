@@ -49,7 +49,7 @@ namespace VarPro{
     Simulator(Dataset* dataset, Options* options, VariableProjectionFunctor* functor);
     ~Simulator();
     
-    Dataset Evaluate();
+    bool Evaluate();
     
   private:
     Dataset* dataset_;

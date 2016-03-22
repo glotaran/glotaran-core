@@ -16,7 +16,7 @@ namespace VarPro{
     virtual ~VariableProjectionFunctor();
     
     virtual bool operator()(double const* const* parameters, double* residuals) const = 0;
-    virtual Dataset operator()() = 0;
+    virtual bool operator()() = 0;
     
     
   protected:

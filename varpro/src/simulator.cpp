@@ -13,7 +13,7 @@ Simulator::~Simulator()
 
 }
 
-Dataset Simulator::Evaluate()
+bool Simulator::Evaluate()
 {
   return functor_->operator()();
 }

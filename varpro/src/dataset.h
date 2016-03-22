@@ -9,19 +9,19 @@ namespace VarPro{
     ~Dataset();
     
     const double* GetTimestamps();
-    void SetTimeStamps(double* timestamps, int length, bool copy=false);
+    void SetTimeStamps(double* timestamps, int length);
     
     const double* GetWavelenghts();
-    void SetWavelengths(double* wavelengths, int length, bool copy=false);
+    void SetWavelengths(double* wavelengths, int length);
     
-    std::vector< GetObservations();
-    void SetObservations(double** observations, int* num_rows, int num_cols, bool copy=false);
+    double** GetObservations();
+    void SetObservations(double** observations, int* num_rows, int num_cols);
     
     double* GetIRFVector();
-    void SetIRFVector(double* irfvec, int length, bool copy=false);
+    void SetIRFVector(double* irfvec, int length);
     
     double* GetRateConstants();
-    void SetRateConstants(double* rateconstants, int length, bool copy=false);
+    void SetRateConstants(double* rateconstants, int length);
     
     int GetNumberOfTimestamps() const;
     int GetNumberOfWavelenghts() const;

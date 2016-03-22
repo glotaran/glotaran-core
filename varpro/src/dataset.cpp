@@ -22,7 +22,7 @@ void Dataset::SetTimeStamps(double* timestamps, int length){
 }
 
 const double* Dataset::GetWavelenghts(){
-  return wavelengths_
+  return wavelengths_;
 }
 
 void Dataset::SetWavelengths(double* wavelengths, int length){

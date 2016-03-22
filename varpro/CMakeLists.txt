@@ -6,11 +6,11 @@ include_directories(${CERES_INCLUDE_DIRS})
 
 find_package(LAPACK REQUIRED)
 
-#add_executable(varpro main.cpp dataset.cpp lapack.cpp ntr.c)
-
 file(GLOB srcs src/*.cpp)
 
 add_library(${PROJECT_NAME} SHARED ${srcs})
+
+target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 target_link_libraries(${PROJECT_NAME} ${CERES_LIBRARIES})

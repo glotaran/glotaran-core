@@ -1,7 +1,6 @@
 #include "dataset.h"
 
-#include <iostream>
-#include <fstream>
+#include <cstring>
 
 using VarPro::Dataset;
 
@@ -10,107 +9,72 @@ Dataset::Dataset(){
 }
 
 Dataset::~Dataset(){
-  delete number_of_observation_rows;
+
 }
 
-const double* Dataset::GetTimestamps()
-{
-  return timestamps_.data();
+const double* Dataset::GetTimestamps(){
+  return timestamps_;
 }
 
-void Dataset::SetTimeStamps(double* timestamps, int length, bool copy)
-{
-  Vector t = Eigen::Map<Eigen::VectorXd>(timestamps, length);
-  if(copy)
-    timestamps_ = Vector(t);
-  else
-    timestamps_ = t;
+void Dataset::SetTimeStamps(double* timestamps, int length){
+  timestamps_ = timestamps;
+  number_of_timestamps = length;
 }
 
-const double* Dataset::GetWavelenghts()
-{
-  return wavelengths_.data();
+const double* Dataset::GetWavelenghts(){
+  return wavelengths_
 }
 
-void Dataset::SetWavelengths(double* wavelengths, int length, bool copy)
-{
-  Vector w = Eigen::Map<Eigen::VectorXd>(wavelengths, length);
-  if(copy)
-    wavelengths_ = Vector(w);
-  else
-    wavelengths_ = w;
+void Dataset::SetWavelengths(double* wavelengths, int length){
+  wavelengths_ = wavelengths;
+  number_of_wavelengths = length;
 }
 
-double** Dataset::GetObservations()
-{
+double** Dataset::GetObservations(){
   return observations_;
 }
 
-void Dataset::SetObservations(double** observations, int* num_rows, int num_cols, bool copy)
-{
-  if(copy){
-    observations_ = new double*[num_cols];
-    for(int i = 0; i < num_cols; ++i){
-      observations_[i] = new double[num_rows[i]];
-      for(int j = 0; j < num_rows[i]; ++j)
-        observations_[i][j]=observations[i][j];
-    }
-  }
-  else
-    observations_ = observations;
-  
-  number_of_observation_rows = new int[num_cols];
-  
-  for(int i = 0; i < num_cols; ++i)
-    number_of_observation_rows[i] = num_rows[i];
-  
+void Dataset::SetObservations(double** observations, int* num_rows, int num_cols){
+  observations_ = observations;
+  number_of_observation_rows = num_rows;
   number_of_observation_cols = num_cols;
-  
 }
 
-double* Dataset::GetIRFVector()
-{
-  return irfvec_.data();
+double* Dataset::GetIRFVector(){
+  return irfvec_;
 }
 
-void Dataset::SetIRFVector(double* irfvec, int length, bool copy)
-{
-  Vector i = Eigen::Map<Eigen::VectorXd>(irfvec, length);
-  if(copy)
-    irfvec_ = Vector(i);
-  else
-    irfvec_ = i;
+void Dataset::SetIRFVector(double* irfvec, int length){
+  irfvec_ = irfvec;
+  number_of_irf_parameters = length;
 }
 
-double* Dataset::GetRateConstants()
-{
-  return rateconstants_.data();
+double* Dataset::GetRateConstants(){
+  return rateconstants_;
 }
 
-void Dataset::SetRateConstants(double* rateconstants, int length, bool copy)
-{
-  Vector r = Eigen::Map<Eigen::VectorXd>(rateconstants, length);
-  if(copy)
-    rateconstants_ = Vector(r);
-  else
-    rateconstants_ = r;
+void Dataset::SetRateConstants(double* rateconstants, int length){
+  rateconstants_ = rateconstants;
+  number_of_rateconstants = length;
 }
 
 int Dataset::GetNumberOfTimestamps() const{
-  return timestamps_.size();
+  return number_of_timestamps;
 }
 
 int Dataset::GetNumberOfWavelenghts() const{
-  return wavelengths_.size();
+  return number_of_wavelengths;
 }
 
-void Dataset::GetSizeOfObservations(int** num_rows, int* num_cols)
-{
+void Dataset::GetSizeOfObservations(int** num_rows, int* num_cols){
   *num_rows = number_of_observation_rows;
   *num_cols = number_of_observation_cols;
 }
 
 int Dataset::GetNumberOfRateconstants() const{
-  return rateconstants_.size();
+  return number_of_rateconstants;
 }
 
+int Dataset::GetNumberOfIRFParameters() const{
+ return number_of_irf_parameters;
+}

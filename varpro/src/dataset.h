@@ -17,19 +17,29 @@ namespace VarPro{
     double** GetObservations();
     void SetObservations(double** observations, int* num_rows, int num_cols);
     
+    double* GetRateConstants();
+    void SetRateConstants(double* rateconstants, int length);
+    
     double* GetIRFVector();
     void SetIRFVector(double* irfvec, int length);
     
-    double* GetRateConstants();
-    void SetRateConstants(double* rateconstants, int length);
+    double* GetLocation();
+    void SetLocation(double* location, int length);
+    
+    double* GetDelta();
+    void SetDelta(double* delta, int length);
+    
+    double* GetAmp();
+    void SetAmp(double* amp, int length);
     
     int GetNumberOfTimestamps() const;
     int GetNumberOfWavelenghts() const;
     void GetSizeOfObservations(int** num_rows, int* num_cols);
     int GetNumberOfRateconstants() const;
     int GetNumberOfIRFParameters() const;
-    
-      
+    int GetNumberOfLocationFactors() const;
+    int GetNumberOfDeltaFactors() const;
+    int GetNumberOfAmplificationFactors() const;
       
   private:
     double* timestamps_;
@@ -48,6 +58,14 @@ namespace VarPro{
     double* irfvec_;
     int number_of_irf_parameters;
     
+    double* location_;
+    int number_of_location_factors;
+    
+    double* delta_;
+    int number_of_delta_factors;
+    
+    double* amp_;
+    int number_of_amplification_factors;
   };
 }
 

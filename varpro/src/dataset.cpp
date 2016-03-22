@@ -58,6 +58,39 @@ void Dataset::SetRateConstants(double* rateconstants, int length){
   number_of_rateconstants = length;
 }
 
+double* Dataset::GetLocation()
+{
+  return location_;
+}
+
+void Dataset::SetLocation(double* location, int length)
+{
+  location_ = location;
+  number_of_location_factors = length;
+}
+
+double* Dataset::GetDelta()
+{
+  return delta_;
+}
+
+void Dataset::SetDelta(double* delta, int length)
+{
+  delta_ = delta;
+  number_of_delta_factors = length;
+}
+
+double* Dataset::GetAmp()
+{
+  return amp_;
+}
+
+void Dataset::SetAmp(double* amp, int length)
+{
+  amp_ = amp;
+  number_of_amplification_factors = length;
+}
+
 int Dataset::GetNumberOfTimestamps() const{
   return number_of_timestamps;
 }
@@ -77,4 +110,19 @@ int Dataset::GetNumberOfRateconstants() const{
 
 int Dataset::GetNumberOfIRFParameters() const{
  return number_of_irf_parameters;
+}
+
+int Dataset::GetNumberOfLocationFactors() const
+{
+  return number_of_location_factors;
+}
+
+int Dataset::GetNumberOfDeltaFactors() const
+{
+  return number_of_delta_factors;
+}
+
+int Dataset::GetNumberOfAmplificationFactors() const
+{
+  return number_of_amplification_factors;
 }

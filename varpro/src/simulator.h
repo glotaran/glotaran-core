@@ -5,7 +5,10 @@
 
 #include "dataset.h"
 #include "options.h"
-using ceres::Vector;
+
+#include "variableprojectionfunctor.h"
+
+/*using ceres::Vector;
 using ceres::internal::scoped_ptr;
 
 template <typename ModelFunctor>
@@ -37,6 +40,23 @@ private:
   
   Dataset dataset_;
   
-};
+};*/
+
+namespace VarPro{
+
+  class Simulator{
+  public:
+    Simulator(Dataset* dataset, Options* options, VariableProjectionFunctor* functor);
+    ~Simulator();
+    
+    Dataset Evaluate();
+    
+  private:
+    Dataset* dataset_;
+    Options* options_;
+    VariableProjectionFunctor* functor_;
+  };
+    
+}
 
 #endif // SIMULATOR_H

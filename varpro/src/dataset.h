@@ -14,8 +14,8 @@ namespace VarPro{
     const double* GetWavelenghts();
     void SetWavelengths(double* wavelengths, int length);
     
-    double** GetObservations();
-    void SetObservations(double** observations, int* num_rows, int num_cols);
+    double* GetObservations();
+    void SetObservations(double* observations, int num_rows, int num_cols);
     
     double* GetRateConstants();
     void SetRateConstants(double* rateconstants, int length);
@@ -34,7 +34,7 @@ namespace VarPro{
     
     int GetNumberOfTimestamps() const;
     int GetNumberOfWavelenghts() const;
-    void GetSizeOfObservations(int** num_rows, int* num_cols);
+    void GetSizeOfObservations(int* num_rows, int* num_cols);
     int GetNumberOfRateconstants() const;
     int GetNumberOfIRFParameters() const;
     int GetNumberOfLocationFactors() const;
@@ -49,7 +49,7 @@ namespace VarPro{
     int number_of_wavelengths;
     
     double** observations_;
-    int* number_of_observation_rows;
+    int number_of_observation_rows;
     int number_of_observation_cols;
     
     double* rateconstants_;

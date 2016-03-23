@@ -30,11 +30,11 @@ void Dataset::SetWavelengths(double* wavelengths, int length){
   number_of_wavelengths = length;
 }
 
-double** Dataset::GetObservations(){
+double* Dataset::GetObservations(){
   return observations_;
 }
 
-void Dataset::SetObservations(double** observations, int* num_rows, int num_cols){
+void Dataset::SetObservations(double* observations, int num_rows, int num_cols){
   observations_ = observations;
   number_of_observation_rows = num_rows;
   number_of_observation_cols = num_cols;
@@ -99,7 +99,7 @@ int Dataset::GetNumberOfWavelenghts() const{
   return number_of_wavelengths;
 }
 
-void Dataset::GetSizeOfObservations(int** num_rows, int* num_cols){
+void Dataset::GetSizeOfObservations(int* num_rows, int* num_cols){
   *num_rows = number_of_observation_rows;
   *num_cols = number_of_observation_cols;
 }

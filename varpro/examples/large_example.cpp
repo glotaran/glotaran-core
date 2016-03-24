@@ -1,6 +1,6 @@
 // Author: yaminokeshin@gmail.com (Stefan Schütz)
 
-#include <algorithm>
+/*#include <algorithm>
 #include <cstring>
 #include <random>
 
@@ -179,6 +179,103 @@ struct ModelFunctor{
 private:
   bool noise_;
   
+};*/
+
+#include <algorithm>
+#include <cstring>
+
+#include "ceres/ceres.h"
+
+#include "varpro.h"
+
+using namespace ceres;
+using namespace VarPro;
+
+class LargeExampleFunctor : public VariableProjectionFunctor {
+public:
+  LargeExampleFunctor(int id, Dataset* dataset, Options* options):
+    VariableProjectionFunctor(id, dataset, options){
+  }
+  
+  ~LargeExampleFunctor(){
+    
+  }
+  
+  bool operator()(double const* const* parameters, double* residuals) const{
+    
+    //const double* k = parameters[0];
+    int lt = dataset_->GetNumberOfTimestamps();
+    int lw = dataset_->GetNumberOfWavelenghts();
+    int lk = dataset_->GetNumberOfRateconstants();
+    
+    //dataset_->SetRateConstants(const_cast<double*>(k), lk);
+    
+    double* C = const_cast<LargeExampleFunctor*>(this)->calcC(parameters);
+    //double* C = const_cast<LargeExampleFunctor*>(this)->calcC();
+    double* PSI = dataset_->GetObservations();
+    Eigen::Map<Eigen::MatrixXd> mapped_PSI(PSI, lt, lw);
+    
+    //ceres::MatrixRef mapped_Residuals(residuals, lw, lt);
+    
+    //for(int i = 0; i < lw; ++i){
+      Vector b = mapped_PSI.col(id_);
+      LAPACK::GetResidualsUsingQR(lt, lk, lt, 1, C, b.data());
+      //std::cout << b << std::endl << std::endl;
+      for(int i = 0; i < lt; ++i)
+        residuals[i] = b[i];
+    //}
+    
+    return true;
+  }
+  
+  bool operator()(){
+    double** parameters = new double*[1];
+    parameters[0] = dataset_->GetRateConstants();
+    
+    double* C = calcC(parameters);
+    double* E = calcE();
+    
+    int lt = dataset_->GetNumberOfTimestamps();
+    int lw = dataset_->GetNumberOfWavelenghts();
+    int ll = dataset_->GetNumberOfLocationFactors();
+    int lk = dataset_->GetNumberOfRateconstants();
+    
+    Eigen::Map<Eigen::MatrixXd> mapped_C(C, lt, lk);
+    Eigen::Map<Eigen::MatrixXd> mapped_E(E, lw, ll);
+    
+    double* PSI = new double[lt * lw];
+    Eigen::Map<Eigen::MatrixXd> mapped_PSI(PSI, lt, lw);
+    
+    mapped_PSI = mapped_C * mapped_E.transpose();
+    
+    dataset_->SetObservations(PSI, lt, lw);
+    
+    delete[] parameters;
+    delete[] C;
+    delete[] E;
+    
+    return true;
+  }
+  
+  int l_;
+
+private:
+  double* calcC(double const* const* parameters){
+    double* T = dataset_->GetTimestamps();
+    //double* k = dataset_->GetRateConstants();
+    const double* k = parameters[0];
+    int lt = dataset_->GetNumberOfTimestamps();
+    int lk = dataset_->GetNumberOfRateconstants();
+    double* C = new double[lt * lk];
+    Eigen::Map<Eigen::MatrixXd> mapped_C(C, lt, lk);
+    for(int i = 0; i < lt; ++i){
+      for(int j = 0; j < lk; ++j){
+        mapped_C(i, j) = ceres::exp(-k[j] * T[i]);
+      }
+    }
+    return C;
+  }
+  
 };
 
 Vector Range(double lower, double upper, double step_size = 1.0){
@@ -189,7 +286,7 @@ Vector Range(double lower, double upper, double step_size = 1.0){
 }
 
 int main(int argc, char** argv) {
-  google::InitGoogleLogging(argv[0]);
+  /*google::InitGoogleLogging(argv[0]);
   Vector times1 = Range(-0.5, 9.98, 0.02);
   Vector times2 = Range(10, 1500, 3.0);
   Vector times(times1.size() + times2.size());
@@ -236,7 +333,81 @@ int main(int argc, char** argv) {
   Solver::Summary summary;
   Solve(options, &problem, &summary);
   std::cout << summary.FullReport() << std::endl;
+  std::cout << k << std::endl;*/
+  
+  Vector times1 = Range(-0.5, 9.98, 0.02);
+  Vector times2 = Range(10, 1500, 3.0);
+  Vector times(times1.size() + times2.size());
+  times << times1, times2;
+  Vector wavenum = Range(12820, 15120, 4.6);
+  Vector irfvec(2);
+  irfvec << -0.02, 0.05;
+  Vector location(6);
+  location << 14705, 13513, 14492, 14388, 14184, 13986;
+  Vector delta(6);
+  delta << 400, 1000, 300, 200, 350, 330;
+  Vector amp(6);
+  amp << 1, 0.2, 1, 1, 1, 1;
+  Vector kinpar(6);
+  kinpar << .006667, .006667, 0.00333, 0.00035, 0.0303, 0.000909;
+  
+  Options o;
+  o.simulate = true;
+  o.simulate_noise = false;
+  o.irf = false;
+  
+  Dataset dataset;
+  dataset.SetTimeStamps(times.data(), times.size());
+  dataset.SetWavelengths(wavenum.data(), wavenum.size());
+  dataset.SetLocations(location.data(), location.size());
+  dataset.SetDelta(delta.data(), delta.size());
+  dataset.SetAmp(amp.data(), amp.size());
+  dataset.SetRateConstants(kinpar.data(), kinpar.size());
+  
+  LargeExampleFunctor* functor = new LargeExampleFunctor(0, &dataset, &o);
+  
+  Simulator simulator(&dataset, &o, functor);
+  
+  simulator.Evaluate();
+  
+  delete functor;
+  
+  Vector k(5);
+  k << .005, 0.003, 0.00022, 0.0300, 0.000888;
+  //dataset->SetRateConstants(k.data(), 5);
+  
+  Problem problem;
+   
+  for(int i = 0; i < dataset.GetNumberOfWavelenghts(); ++i){
+    DynamicNumericDiffCostFunction<LargeExampleFunctor>* costFunction = new DynamicNumericDiffCostFunction<LargeExampleFunctor>(
+      new LargeExampleFunctor(i, &dataset, &o));
+    costFunction->AddParameterBlock(dataset.GetNumberOfRateconstants());
+    costFunction->SetNumResiduals(dataset.GetNumberOfTimestamps());
+    problem.AddResidualBlock(costFunction, NULL, k.data());
+  }
+  
+  /*DynamicNumericDiffCostFunction<LargeExampleFunctor>* costFunction = new DynamicNumericDiffCostFunction<LargeExampleFunctor>(functor);
+  costFunction->AddParameterBlock(dataset->GetNumberOfRateconstants());
+  costFunction->SetNumResiduals(dataset->GetNumberOfTimestamps() * dataset->GetNumberOfWavelenghts());
+  problem.AddResidualBlock(costFunction, NULL, dataset->GetRateConstants());*/
+  
+  Solver::Options options;
+  options.max_num_iterations = 50;
+  options.linear_solver_type = ceres::DENSE_QR;
+  options.minimizer_progress_to_stdout = true;
+  options.num_threads = 8;
+  options.gradient_tolerance = 1e-30;
+  options.function_tolerance = 1e-30;
+  options.parameter_tolerance = 1e-30;
+  
+
+  Solver::Summary summary;
+  Solve(options, &problem, &summary);
+  std::cout << summary.FullReport() << std::endl;
   std::cout << k << std::endl;
+  
+  //delete o;
+  //delete dataset;
   
   return 0;
 }

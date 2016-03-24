@@ -6,6 +6,7 @@ namespace VarPro{
   struct Options
   {
     bool simulate;
+    bool simulate_noise;
     bool irf;
   };
   

@@ -12,7 +12,7 @@ Dataset::~Dataset(){
 
 }
 
-const double* Dataset::GetTimestamps(){
+double* Dataset::GetTimestamps(){
   return timestamps_;
 }
 
@@ -21,7 +21,7 @@ void Dataset::SetTimeStamps(double* timestamps, int length){
   number_of_timestamps = length;
 }
 
-const double* Dataset::GetWavelenghts(){
+double* Dataset::GetWavelenghts(){
   return wavelengths_;
 }
 
@@ -58,12 +58,12 @@ void Dataset::SetRateConstants(double* rateconstants, int length){
   number_of_rateconstants = length;
 }
 
-double* Dataset::GetLocation()
+double* Dataset::GetLocations()
 {
   return location_;
 }
 
-void Dataset::SetLocation(double* location, int length)
+void Dataset::SetLocations(double* location, int length)
 {
   location_ = location;
   number_of_location_factors = length;
@@ -109,7 +109,7 @@ int Dataset::GetNumberOfRateconstants() const{
 }
 
 int Dataset::GetNumberOfIRFParameters() const{
- return number_of_irf_parameters;
+  return number_of_irf_parameters;
 }
 
 int Dataset::GetNumberOfLocationFactors() const

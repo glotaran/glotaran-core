@@ -8,10 +8,10 @@ namespace VarPro{
     Dataset();
     ~Dataset();
     
-    const double* GetTimestamps();
+    double* GetTimestamps();
     void SetTimeStamps(double* timestamps, int length);
     
-    const double* GetWavelenghts();
+    double* GetWavelenghts();
     void SetWavelengths(double* wavelengths, int length);
     
     double* GetObservations();
@@ -23,8 +23,8 @@ namespace VarPro{
     double* GetIRFVector();
     void SetIRFVector(double* irfvec, int length);
     
-    double* GetLocation();
-    void SetLocation(double* location, int length);
+    double* GetLocations();
+    void SetLocations(double* location, int length);
     
     double* GetDelta();
     void SetDelta(double* delta, int length);
@@ -48,7 +48,7 @@ namespace VarPro{
     double* wavelengths_;
     int number_of_wavelengths;
     
-    double** observations_;
+    double* observations_;
     int number_of_observation_rows;
     int number_of_observation_cols;
     

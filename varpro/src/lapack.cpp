@@ -66,5 +66,7 @@ int LAPACK::GetResidualsUsingQR(int num_rows_a, int num_cols_a, int num_rows_b, 
   
   dormqr_(&side, &trans, &num_rows_b, &num_cols_b, &k, mutable_a, &num_rows_b, tau, mutable_b, &num_rows_b, work, &lwork, &info);
   
+  delete work;
+  
   return info;
 }

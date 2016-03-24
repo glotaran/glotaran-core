@@ -12,7 +12,7 @@ namespace VarPro{
   class VariableProjectionFunctor
   {
   public:
-    VariableProjectionFunctor(Dataset* dataset, Options* options);
+    VariableProjectionFunctor(int id, Dataset* dataset, Options* options);
     virtual ~VariableProjectionFunctor();
     
     virtual bool operator()(double const* const* parameters, double* residuals) const = 0;
@@ -20,10 +20,12 @@ namespace VarPro{
     
     
   protected:
+    int id_;
     Dataset* dataset_;
     Options* options_;
     
-    virtual ColMajorMatrix calcC() = 0;
+    virtual double* calcC(double const* const* parameters) = 0;
+    double* calcE();
   };
 
 }

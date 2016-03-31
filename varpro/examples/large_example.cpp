@@ -202,28 +202,20 @@ public:
   }
   
   bool operator()(double const* const* parameters, double* residuals) const{
-    
-    //const double* k = parameters[0];
     int lt = dataset_->GetNumberOfTimestamps();
     int lw = dataset_->GetNumberOfWavelenghts();
     int lk = dataset_->GetNumberOfRateconstants();
     
-    //dataset_->SetRateConstants(const_cast<double*>(k), lk);
-    
     double* C = const_cast<LargeExampleFunctor*>(this)->calcC(parameters, false);
-    //double* C = const_cast<LargeExampleFunctor*>(this)->calcC();
+    
     double* PSI = dataset_->GetObservations();
     Eigen::Map<Eigen::MatrixXd> mapped_PSI(PSI, lt, lw);
     
-    //ceres::MatrixRef mapped_Residuals(residuals, lw, lt);
+    Vector b = mapped_PSI.col(id_);
+    LAPACK::GetResidualsUsingQR(lt, lk, lt, 1, C, b.data());
     
-    //for(int i = 0; i < lw; ++i){
-      Vector b = mapped_PSI.col(id_);
-      LAPACK::GetResidualsUsingQR(lt, lk, lt, 1, C, b.data());
-      //std::cout << b << std::endl << std::endl;
-      for(int i = 0; i < lt; ++i)
-        residuals[i] = b[i];
-    //}
+    for(int i = 0; i < lt; ++i)
+      residuals[i] = b[i];
     
     return true;
   }
@@ -262,7 +254,6 @@ public:
 private:
   double* calcC(double const* const* parameters, bool for_simulation){
     double* T = dataset_->GetTimestamps();
-    //double* k = dataset_->GetRateConstants();
     const double* k = parameters[0];
     int lt = dataset_->GetNumberOfTimestamps();
     int lk = dataset_->GetNumberOfRateconstants(for_simulation);
@@ -286,54 +277,7 @@ Vector Range(double lower, double upper, double step_size = 1.0){
 }
 
 int main(int argc, char** argv) {
-  /*google::InitGoogleLogging(argv[0]);
-  Vector times1 = Range(-0.5, 9.98, 0.02);
-  Vector times2 = Range(10, 1500, 3.0);
-  Vector times(times1.size() + times2.size());
-  times << times1, times2;
-  //Vector times = Range(0, 1500, 1.5);
-  Vector wavenum = Range(12820, 15120, 4.6);
-  Vector irfvec(2);
-  irfvec << -0.02, 0.05;
-  Vector location(6);
-  location << 14705, 13513, 14492, 14388, 14184, 13986;
-  Vector delta(6);
-  delta << 400, 1000, 300, 200, 350, 330;
-  Vector amp(6);
-  amp << 1, 0.2, 1, 1, 1, 1;
-  Vector kinpar(6);
-  kinpar << .006667, .006667, 0.00333, 0.00035, 0.0303, 0.000909;
-  ModelFunctor* functor = new ModelFunctor();
-  Simulator<ModelFunctor> simulator(times, wavenum, irfvec, location, delta, amp, kinpar, functor);
-  Dataset dataset = simulator.Evaluate();
-  Vector k(5);
-  k << .005, 0.003, 0.00022, 0.0300, 0.000888;
-  dataset.SetRateConstants(k);
-  dataset.SetIRFVector(irfvec);
-  Problem problem;
-   
-  for(int i = 0; i < dataset.GetNumberOfWavelenghts(); ++i){
-    DynamicNumericDiffCostFunction<ExponentialResidual>* costFunction = new DynamicNumericDiffCostFunction<ExponentialResidual>(
-      new ExponentialResidual(i, dataset));
-    costFunction->AddParameterBlock(dataset.GetNumberOfRateconstants());
-    costFunction->SetNumResiduals(dataset.GetNumberOfTimestamps());
-    problem.AddResidualBlock(costFunction, NULL, k.data());
-  }
-  
-  Solver::Options options;
-  options.max_num_iterations = 25;
-  options.linear_solver_type = ceres::DENSE_QR;
-  options.minimizer_progress_to_stdout = true;
-  options.num_threads = 8;
-  options.gradient_tolerance = 1e-30;
-  options.function_tolerance = 1e-30;
-  options.parameter_tolerance = 1e-30;
-  
-
-  Solver::Summary summary;
-  Solve(options, &problem, &summary);
-  std::cout << summary.FullReport() << std::endl;
-  std::cout << k << std::endl;*/
+  google::InitGoogleLogging(argv[0]);
   
   Vector times1 = Range(-0.5, 9.98, 0.02);
   Vector times2 = Range(10, 1500, 3.0);
@@ -374,7 +318,6 @@ int main(int argc, char** argv) {
   k << .005, 0.003, 0.00022, 0.0300, 0.000888;
   dataset.SetRateConstants(k.data(), 5);
   
-  
   Problem problem;
    
   for(int i = 0; i < dataset.GetNumberOfWavelenghts(); ++i){
@@ -384,11 +327,6 @@ int main(int argc, char** argv) {
     costFunction->SetNumResiduals(dataset.GetNumberOfTimestamps());
     problem.AddResidualBlock(costFunction, NULL, dataset.GetRateConstants());
   }
-  
-  /*DynamicNumericDiffCostFunction<LargeExampleFunctor>* costFunction = new DynamicNumericDiffCostFunction<LargeExampleFunctor>(functor);
-  costFunction->AddParameterBlock(dataset->GetNumberOfRateconstants());
-  costFunction->SetNumResiduals(dataset->GetNumberOfTimestamps() * dataset->GetNumberOfWavelenghts());
-  problem.AddResidualBlock(costFunction, NULL, dataset->GetRateConstants());*/
   
   Solver::Options options;
   options.max_num_iterations = 25;
@@ -403,10 +341,8 @@ int main(int argc, char** argv) {
   Solver::Summary summary;
   Solve(options, &problem, &summary);
   std::cout << summary.FullReport() << std::endl;
+  
   std::cout << k << std::endl;
-  
-  //delete o;
-  //delete dataset;
-  
+    
   return 0;
 }

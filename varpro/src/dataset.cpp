@@ -49,13 +49,22 @@ void Dataset::SetIRFVector(double* irfvec, int length){
   number_of_irf_parameters = length;
 }
 
-double* Dataset::GetRateConstants(){
-  return rateconstants_;
+double* Dataset::GetRateConstants(bool for_simulation){
+  if(for_simulation)
+    return rateconstants_[1];
+  else
+    return rateconstants_[0];
 }
 
-void Dataset::SetRateConstants(double* rateconstants, int length){
-  rateconstants_ = rateconstants;
-  number_of_rateconstants = length;
+void Dataset::SetRateConstants(double* rateconstants, int length, bool for_simulation){
+  if(for_simulation){
+    rateconstants_[1] = rateconstants;
+    number_of_rateconstants[1] = length;
+  }
+  else{
+    rateconstants_[0] = rateconstants;
+    number_of_rateconstants[0] = length;
+  }
 }
 
 double* Dataset::GetLocations()
@@ -104,8 +113,11 @@ void Dataset::GetSizeOfObservations(int* num_rows, int* num_cols){
   *num_cols = number_of_observation_cols;
 }
 
-int Dataset::GetNumberOfRateconstants() const{
-  return number_of_rateconstants;
+int Dataset::GetNumberOfRateconstants(bool for_simulation) const{
+  if(for_simulation)
+    return number_of_rateconstants[1];
+  else
+    return number_of_rateconstants[0];
 }
 
 int Dataset::GetNumberOfIRFParameters() const{

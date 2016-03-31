@@ -210,7 +210,7 @@ public:
     
     //dataset_->SetRateConstants(const_cast<double*>(k), lk);
     
-    double* C = const_cast<LargeExampleFunctor*>(this)->calcC(parameters);
+    double* C = const_cast<LargeExampleFunctor*>(this)->calcC(parameters, false);
     //double* C = const_cast<LargeExampleFunctor*>(this)->calcC();
     double* PSI = dataset_->GetObservations();
     Eigen::Map<Eigen::MatrixXd> mapped_PSI(PSI, lt, lw);
@@ -230,15 +230,15 @@ public:
   
   bool operator()(){
     double** parameters = new double*[1];
-    parameters[0] = dataset_->GetRateConstants();
+    parameters[0] = dataset_->GetRateConstants(true);
     
-    double* C = calcC(parameters);
+    double* C = calcC(parameters, true);
     double* E = calcE();
     
     int lt = dataset_->GetNumberOfTimestamps();
     int lw = dataset_->GetNumberOfWavelenghts();
     int ll = dataset_->GetNumberOfLocationFactors();
-    int lk = dataset_->GetNumberOfRateconstants();
+    int lk = dataset_->GetNumberOfRateconstants(true);
     
     Eigen::Map<Eigen::MatrixXd> mapped_C(C, lt, lk);
     Eigen::Map<Eigen::MatrixXd> mapped_E(E, lw, ll);
@@ -260,12 +260,12 @@ public:
   int l_;
 
 private:
-  double* calcC(double const* const* parameters){
+  double* calcC(double const* const* parameters, bool for_simulation){
     double* T = dataset_->GetTimestamps();
     //double* k = dataset_->GetRateConstants();
     const double* k = parameters[0];
     int lt = dataset_->GetNumberOfTimestamps();
-    int lk = dataset_->GetNumberOfRateconstants();
+    int lk = dataset_->GetNumberOfRateconstants(for_simulation);
     double* C = new double[lt * lk];
     Eigen::Map<Eigen::MatrixXd> mapped_C(C, lt, lk);
     for(int i = 0; i < lt; ++i){
@@ -362,19 +362,18 @@ int main(int argc, char** argv) {
   dataset.SetLocations(location.data(), location.size());
   dataset.SetDelta(delta.data(), delta.size());
   dataset.SetAmp(amp.data(), amp.size());
-  dataset.SetRateConstants(kinpar.data(), kinpar.size());
+  dataset.SetRateConstants(kinpar.data(), kinpar.size(), true);
   
-  LargeExampleFunctor* functor = new LargeExampleFunctor(0, &dataset, &o);
+  LargeExampleFunctor functor(0, &dataset, &o);
   
-  Simulator simulator(&dataset, &o, functor);
+  Simulator simulator(&dataset, &o, &functor);
   
   simulator.Evaluate();
   
-  delete functor;
-  
   Vector k(5);
   k << .005, 0.003, 0.00022, 0.0300, 0.000888;
-  //dataset->SetRateConstants(k.data(), 5);
+  dataset.SetRateConstants(k.data(), 5);
+  
   
   Problem problem;
    
@@ -383,7 +382,7 @@ int main(int argc, char** argv) {
       new LargeExampleFunctor(i, &dataset, &o));
     costFunction->AddParameterBlock(dataset.GetNumberOfRateconstants());
     costFunction->SetNumResiduals(dataset.GetNumberOfTimestamps());
-    problem.AddResidualBlock(costFunction, NULL, k.data());
+    problem.AddResidualBlock(costFunction, NULL, dataset.GetRateConstants());
   }
   
   /*DynamicNumericDiffCostFunction<LargeExampleFunctor>* costFunction = new DynamicNumericDiffCostFunction<LargeExampleFunctor>(functor);
@@ -392,7 +391,7 @@ int main(int argc, char** argv) {
   problem.AddResidualBlock(costFunction, NULL, dataset->GetRateConstants());*/
   
   Solver::Options options;
-  options.max_num_iterations = 50;
+  options.max_num_iterations = 25;
   options.linear_solver_type = ceres::DENSE_QR;
   options.minimizer_progress_to_stdout = true;
   options.num_threads = 8;

@@ -24,7 +24,7 @@ namespace VarPro{
     Dataset* dataset_;
     Options* options_;
     
-    virtual double* calcC(double const* const* parameters) = 0;
+    virtual double* calcC(double const* const* parameters, const bool for_simulation) = 0;
     double* calcE();
   };
 

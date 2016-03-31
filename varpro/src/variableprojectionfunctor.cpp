@@ -9,7 +9,7 @@ VariableProjectionFunctor::VariableProjectionFunctor(int id, Dataset* dataset, O
 }
 
 VariableProjectionFunctor::~VariableProjectionFunctor(){
-
+  
 }
 
 double* VariableProjectionFunctor::calcE()
@@ -19,12 +19,12 @@ double* VariableProjectionFunctor::calcE()
     double* location = dataset_->GetLocations();
     double* delta = dataset_->GetDelta();
     double* amp = dataset_->GetAmp();
-    double* kinpar = dataset_->GetRateConstants();
+    double* kinpar = dataset_->GetRateConstants(true);
     
     int lt = dataset_->GetNumberOfTimestamps();
     int lw = dataset_->GetNumberOfWavelenghts();
     int ll = dataset_->GetNumberOfLocationFactors();
-    int lk = dataset_->GetNumberOfRateconstants();
+    int lk = dataset_->GetNumberOfRateconstants(true);
     
     double* E = new double[lw * ll];
     Eigen::Map<Eigen::MatrixXd> mapped_E(E, lw, ll);

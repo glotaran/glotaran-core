@@ -41,10 +41,12 @@ int LAPACK::GetResidualsUsingQR(int num_rows_a, int num_cols_a, int num_rows_b, 
   
   dgeqrf_(&num_rows_a, &num_cols_a, mutable_a, &num_rows_a, tau, work, &lwork, &info);
   
-  if(info < 0)
+  if(info < 0){
+    delete[] work;
     return info;
+  }
   
-  delete work;
+  delete[] work;
   
   char side = 'L';
   char trans = 'T';
@@ -56,8 +58,10 @@ int LAPACK::GetResidualsUsingQR(int num_rows_a, int num_cols_a, int num_rows_b, 
   
   dormqr_(&side, &trans, &num_rows_b, &num_cols_b, &k, mutable_a, &num_rows_b, tau, mutable_b, &num_rows_b, work, &lwork, &info);
   
-  if(info < 0)
+  if(info < 0){
+    delete[] work;
     return info;
+  }
   
   for(int i = 0; i < num_cols_a; ++i)
     mutable_b[i] = 0;
@@ -66,7 +70,7 @@ int LAPACK::GetResidualsUsingQR(int num_rows_a, int num_cols_a, int num_rows_b, 
   
   dormqr_(&side, &trans, &num_rows_b, &num_cols_b, &k, mutable_a, &num_rows_b, tau, mutable_b, &num_rows_b, work, &lwork, &info);
   
-  delete work;
+  delete[] work;
   
   return info;
 }

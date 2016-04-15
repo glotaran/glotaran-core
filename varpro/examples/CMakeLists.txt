@@ -1,3 +1,0 @@
-add_executable(large_example large_example.cpp)
-target_link_libraries(large_example varpro)
-set_property(TARGET large_example PROPERTY CXX_STANDARD 11)

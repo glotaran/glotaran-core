@@ -83,17 +83,17 @@ namespace AnalysisCore{
 extern "C" {
 #endif
   
-  inline bool ac_get_bool(void* base, const char* member_name);
-  inline double ac_get_double(void* base, const char* member_name);
-  inline const char* ac_get_string(void* base, const char* member_name);
-  inline double* ac_get_vector(void* base, const char* member_name, int* num_rows);
-  inline double* ac_get_matrix(void* base, const char* member_name, int* num_rows, int* num_cols);
+  bool ac_get_bool(void* base, const char* member_name);
+  double ac_get_double(void* base, const char* member_name);
+  const char* ac_get_string(void* base, const char* member_name);
+  double* ac_get_vector(void* base, const char* member_name, int* num_rows);
+  double* ac_get_matrix(void* base, const char* member_name, int* num_rows, int* num_cols);
   
-  inline void ac_set_bool(void* base, const char* member_name, bool value);
-  inline void ac_set_double(void* base, const char* member_name, double value);
-  inline void ac_set_string(void* base, const char* member_name, const char* value);
-  inline void ac_set_vector(void* base, const char* member_name, double* vector, int num_rows);
-  inline void ac_set_matrix(void* base, const char* member_name, double* matrix, int num_rows, int num_cols);
+  void ac_set_bool(void* base, const char* member_name, bool value);
+  void ac_set_double(void* base, const char* member_name, double value);
+  void ac_set_string(void* base, const char* member_name, const char* value);
+  void ac_set_vector(void* base, const char* member_name, double* vector, int num_rows);
+  void ac_set_matrix(void* base, const char* member_name, double* matrix, int num_rows, int num_cols);
 
     
 #ifdef __cplusplus

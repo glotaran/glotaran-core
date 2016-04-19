@@ -14,11 +14,26 @@ include_directories(${ARMADILLO_INCLUDE_DIRS})
 find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
-set(internal 
-    src/internal/base.cpp
+find_program(COG cog.py)
+mark_as_advanced(FORCE COG)
+
+if(COG)
+  set(gen
+        dataset
+      )
+  foreach(g ${gen})
+    execute_process(COMMAND ${COG} -d -o "${CMAKE_CURRENT_SOURCE_DIR}/include/analysis-core/${g}.h" "${CMAKE_CURRENT_SOURCE_DIR}/codegen/${g}.h")
+    execute_process(COMMAND ${COG} -d -o "${CMAKE_CURRENT_SOURCE_DIR}/src/${g}.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/codegen/${g}.cpp")
+  endforeach(g)
+else()
+  message(FATAL_ERROR "cog.py not found")
+endif(COG)
+
+set(srcs
+    src/dataset
     )
 
-add_library(${PROJECT_NAME} SHARED ${internal})
+add_library(${PROJECT_NAME} SHARED ${srcs})
 
 generate_export_header(${PROJECT_NAME} BASE_NAME ${PROJECT_NAME} EXPORT_MACRO_NAME ANALYSIS_CORE_EXPORT EXPORT_FILE_NAME analysis-core_export.h)
 

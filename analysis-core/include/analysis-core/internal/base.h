@@ -1,5 +1,5 @@
-#ifndef ACBASE_H
-#define ACBASE_H
+#ifndef AC_BASE_H
+#define AC_BASE_H
 
 #include <map>
 #include <memory>
@@ -100,4 +100,4 @@ extern "C" {
 }
 #endif
 
-#endif //ACBASE_H
+#endif //AC_BASE_H

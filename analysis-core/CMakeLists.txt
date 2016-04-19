@@ -18,7 +18,10 @@ set(internal
     src/internal/base.cpp
     )
 
-add_library(${PROJECT_NAME} SHARED ${internal})
+set(srcs
+    src/dataset.cpp
+    )
+add_library(${PROJECT_NAME} SHARED ${internal} ${srcs})
 
 generate_export_header(${PROJECT_NAME} BASE_NAME ${PROJECT_NAME} EXPORT_MACRO_NAME ANALYSIS_CORE_EXPORT EXPORT_FILE_NAME analysis-core_export.h)
 

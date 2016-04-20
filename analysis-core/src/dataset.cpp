@@ -26,6 +26,10 @@ ANALYSIS_CORE_EXPORT double ac_dataset_get_double(void* dataset, const char* mem
   return ac_get_double(dataset, member_name);
 }
 
+ANALYSIS_CORE_EXPORT int ac_dataset_get_int(void* dataset, const char* member_name){
+  return ac_get_int(dataset, member_name);
+}
+
 ANALYSIS_CORE_EXPORT const char* ac_dataset_get_string(void* dataset, const char* member_name){
   return ac_get_string(dataset, member_name);
 }
@@ -44,6 +48,10 @@ ANALYSIS_CORE_EXPORT void ac_dataset_set_bool(void* dataset, const char* member_
 
 ANALYSIS_CORE_EXPORT void ac_dataset_set_double(void* dataset, const char* member_name, double value){
   ac_set_double(dataset, member_name, value);
+}
+
+ANALYSIS_CORE_EXPORT void ac_dataset_set_int(void* dataset, const char* member_name, int value){
+  ac_set_int(dataset, member_name, value);
 }
 
 ANALYSIS_CORE_EXPORT void ac_dataset_set_string(void* dataset, const char* member_name, const char* value){

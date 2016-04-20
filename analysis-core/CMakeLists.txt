@@ -20,6 +20,7 @@ set(internal
 
 set(srcs
     src/dataset.cpp
+    src/options.cpp
     )
 
 add_library(${PROJECT_NAME} SHARED ${internal} ${srcs})

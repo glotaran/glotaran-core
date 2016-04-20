@@ -1,4 +1,4 @@
-#include <cmath>
+#include <limits>
 #include <memory>
 
 #include "analysis-core/internal/base.h"
@@ -16,7 +16,13 @@ bool ac_get_bool(void* base, const char* member_name){
 double ac_get_double(void* base, const char* member_name){
   auto b = get_base_from_void(base);
   auto r = b->Get<double>(std::string(member_name));
-  return r.value_or(NAN);
+  return r.value_or(std::numeric_limits<double>::quiet_NaN());
+}
+
+double ac_get_int(void* base, const char* member_name){
+  auto b = get_base_from_void(base);
+  auto r = b->Get<int>(std::string(member_name));
+  return r.value_or(std::numeric_limits<int>::min());
 }
 
 const char* ac_get_string(void* base, const char* member_name){
@@ -42,6 +48,11 @@ void ac_set_bool(void* base, const char* member_name, bool value){
 void ac_set_double(void* base, const char* member_name, double value){
   auto b = get_base_from_void(base);
   b->Set<double>(std::string(member_name), value);
+}
+
+void ac_set_int(void* base, const char* member_name, int value){
+  auto b = get_base_from_void(base);
+  b->Set<int>(std::string(member_name), value);
 }
 
 void ac_set_string(void* base, const char* member_name, const char* value){

@@ -41,7 +41,7 @@ ANALYSIS_CORE_EXPORT const char* ac_options_get_string(void* options, const char
   return ac_get_string(options, member_name);
 }
 
-ANALYSIS_CORE_EXPORT void* ac_options_get_string(void* options, const char* member_name){
+ANALYSIS_CORE_EXPORT void* ac_options_get_arbitrary(void* options, const char* member_name){
   return ac_get_arbitrary(options, member_name);
 }
 

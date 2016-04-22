@@ -87,6 +87,7 @@ extern "C" {
   double ac_get_double(void* base, const char* member_name);
   double ac_get_int(void* base, const char* member_name);
   const char* ac_get_string(void* base, const char* member_name);
+  void* ac_get_arbitrary(void* base, const char* member_name);
   double* ac_get_vector(void* base, const char* member_name, int* num_rows);
   double* ac_get_matrix(void* base, const char* member_name, int* num_rows, int* num_cols);
   
@@ -94,6 +95,7 @@ extern "C" {
   void ac_set_double(void* base, const char* member_name, double value);
   void ac_set_int(void* base, const char* member_name, int value);
   void ac_set_string(void* base, const char* member_name, const char* value);
+  void ac_set_arbitrary(void* base, const char* member_name, void* value);
   void ac_set_vector(void* base, const char* member_name, double* vector, int num_rows);
   void ac_set_matrix(void* base, const char* member_name, double* matrix, int num_rows, int num_cols);
 

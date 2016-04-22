@@ -27,6 +27,10 @@ ANALYSIS_CORE_EXPORT const char* ac_options_get_string(void* options, const char
   return ac_get_string(options, member_name);
 }
 
+ANALYSIS_CORE_EXPORT void* ac_options_get_string(void* options, const char* member_name){
+  return ac_get_arbitrary(options, member_name);
+}
+
 ANALYSIS_CORE_EXPORT double* ac_options_get_vector(void* options, const char* member_name, int* num_rows){
   return ac_get_vector(options, member_name, num_rows);
 }
@@ -49,6 +53,10 @@ ANALYSIS_CORE_EXPORT void ac_options_set_int(void* options, const char* member_n
 
 ANALYSIS_CORE_EXPORT void ac_options_set_string(void* options, const char* member_name, const char* value){
   ac_set_string(options, member_name, value);
+}
+
+ANALYSIS_CORE_EXPORT void ac_options_set_arbitrary(void* options, const char* member_name, void* value){
+  ac_set_arbitrary(options, member_name, value);
 }
 
 ANALYSIS_CORE_EXPORT void ac_options_set_vector(void* options, const char* member_name, double* vector, int num_rows){

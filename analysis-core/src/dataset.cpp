@@ -34,6 +34,10 @@ ANALYSIS_CORE_EXPORT const char* ac_dataset_get_string(void* dataset, const char
   return ac_get_string(dataset, member_name);
 }
 
+ANALYSIS_CORE_EXPORT void* ac_dataset_get_arbitrary(void* dataset, const char* member_name){
+  return ac_get_arbitrary(dataset, member_name);
+}
+
 ANALYSIS_CORE_EXPORT double* ac_dataset_get_vector(void* dataset, const char* member_name, int* num_rows){
   return ac_get_vector(dataset, member_name, num_rows);
 }
@@ -56,6 +60,10 @@ ANALYSIS_CORE_EXPORT void ac_dataset_set_int(void* dataset, const char* member_n
 
 ANALYSIS_CORE_EXPORT void ac_dataset_set_string(void* dataset, const char* member_name, const char* value){
   ac_set_string(dataset, member_name, value);
+}
+
+ANALYSIS_CORE_EXPORT void ac_dataset_set_arbitrary(void* dataset, const char* member_name, void* value){
+  ac_set_arbitrary(dataset, member_name, value);
 }
 
 ANALYSIS_CORE_EXPORT void ac_dataset_set_vector(void* dataset, const char* member_name, double* vector, int num_rows){

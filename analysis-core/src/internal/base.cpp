@@ -30,6 +30,11 @@ const char* ac_get_string(void* base, const char* member_name){
   return b->Get<const char*>(std::string(member_name));
 }
 
+void* ac_get_arbitrary(void* base, const char* member_name){
+  auto b = get_base_from_void(base);
+  return b->Get<void*>(std::string(member_name));
+}
+
 double* ac_get_vector(void* base, const char* member_name, int* num_rows){
   auto b = get_base_from_void(base);
   return b->Get<vec, double*>(std::string(member_name), num_rows);
@@ -58,6 +63,11 @@ void ac_set_int(void* base, const char* member_name, int value){
 void ac_set_string(void* base, const char* member_name, const char* value){
   auto b = get_base_from_void(base);
   b->Set<const char*>(std::string(member_name), value);
+}
+
+void ac_set_arbitrary(void* base, const char* member_name, void* value){
+  auto b = get_base_from_void(base);
+  b->Set<void*>(std::string(member_name), value);
 }
 
 void ac_set_vector(void* base, const char* member_name, double* vector, int num_rows){

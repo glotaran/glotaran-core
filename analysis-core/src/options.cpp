@@ -4,11 +4,25 @@
 using namespace AnalysisCore;
 
 Options::Options(){
-
+  ceres_options_.max_num_iterations = 25;
+  ceres_options_.linear_solver_type = ceres::DENSE_QR;
+  ceres_options_.minimizer_progress_to_stdout = true;
+  ceres_options_.num_threads = 8;
+  ceres_options_.gradient_tolerance = 1e-30;
+  ceres_options_.function_tolerance = 1e-30;
+  ceres_options_.parameter_tolerance = 1e-30;
 }
 
 Options::~Options(){
 
+}
+
+ceres::Solver::Options& Options::GetCeresOptions(){
+  return ceres_options_;
+}
+
+void Options::SetCeresOptions(ceres::Solver::Options& ceres_options){
+  ceres_options_ = ceres_options;
 }
 
 ANALYSIS_CORE_EXPORT bool ac_options_get_bool(void* options, const char* member_name){

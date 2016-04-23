@@ -13,9 +13,12 @@ Dataset::~Dataset(){
 
 }
 
-std::shared_ptr<MemberBase> Dataset::Get(const std::string& name)
-{
+std::shared_ptr<MemberBase> Dataset::Get(const std::string& name){
   return members_[name];
+}
+
+void Dataset::Set(const std::string& name, std::shared_ptr< MemberBase > member){
+  members_[name] = member;
 }
 
 ANALYSIS_CORE_EXPORT bool ac_dataset_get_bool(void* dataset, const char* member_name){

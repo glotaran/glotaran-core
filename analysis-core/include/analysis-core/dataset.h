@@ -15,6 +15,7 @@ namespace AnalysisCore{
     virtual ~Dataset();
     
     std::shared_ptr<MemberBase> Get(const std::string& name);
+    void Set(const std::string& name, std::shared_ptr<MemberBase> member);
 
   private:
     int id_;

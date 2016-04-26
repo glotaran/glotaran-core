@@ -70,15 +70,23 @@ namespace AnaylsisCore{
       Member(T& m) : Member<T>(m){}
       
       virtual ~Member<T, Converter>(){}
-            
+       
+      T Get(){
+        static_cast<Member<T>*>(this)->Get();
+      }
+      
+      void Set(T& m){
+        static_cast<Member<T>*>(this)->Set(m);
+      }
+       
       template<class AT, class... Args> AT Get(Args... args){
         Converter c;
-        return c.Get((vec*)this, args...);
+        return c.Get((T*)this, args...);
       }
       
       template<class AT, class... Args> void Set(AT arg, Args... args){
         Converter c;
-        c.Set((vec*)(this), arg, args...);
+        c.Set((T*)(this), arg, args...);
       }
       
     };

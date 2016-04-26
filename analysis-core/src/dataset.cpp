@@ -5,19 +5,27 @@
 
 using namespace AnalysisCore;
 
-Dataset::Dataset(int id) : id_(id){
+Dataset::Dataset(int& id) : id_(id){
 
+}
+
+std::shared_ptr<Dataset>&& Dataset::Create(int& id){
+  return std::move(std::make_shared<Dataset>(id));
 }
 
 Dataset::~Dataset(){
 
 }
 
-std::shared_ptr<MemberBase> Dataset::Get(const std::string& name){
+int Dataset::GetId(){
+  return id_;
+}
+
+std::shared_ptr<MemberBase> Dataset::GetMember(const std::string& name){
   return members_[name];
 }
 
-void Dataset::Set(const std::string& name, std::shared_ptr< MemberBase > member){
+void Dataset::SetMember(const std::string& name, std::shared_ptr<MemberBase> member){
   members_[name] = member;
 }
 

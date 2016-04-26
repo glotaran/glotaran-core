@@ -13,6 +13,10 @@ Options::Options(){
   ceres_options_.parameter_tolerance = 1e-30;
 }
 
+std::shared_ptr<Options>&& Options::Create(){
+  return std::move(std::make_shared<Options>());
+}
+
 Options::~Options(){
 
 }

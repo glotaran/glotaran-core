@@ -1,6 +1,8 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
+#include <memory>
+
 #include <ceres/solver.h>
 
 #include "analysis-core/internal/member.h"
@@ -13,14 +15,26 @@ namespace AnalysisCore{
   class ANALYSIS_CORE_EXPORT Options : public internal::Base{
   
   public:
-    Options();
     virtual ~Options();
     
     ceres::Solver::Options& GetCeresOptions();
     void SetCeresOptions(ceres::Solver::Options& ceres_options);
     
   private:
+    ANALYSIS_CORE_NO_EXPORT Options();
+    ANALYSIS_CORE_NO_EXPORT std::shared_ptr<Options>&& Create();
+    
     ceres::Solver::Options ceres_options_;
+    
+    friend class Core;
+    
+#if defined(BOOST_GCC) || defined(BOOST_CLANG)
+    friend void __gnu_cxx::new_allocator<Options>::construct<Options>(Options*);
+#elif defined(BOOST_MSVC)
+    friend class std::_Ref_count_obj;
+#else
+  #error Unsupported compiler
+#endif
   };
   
 }
@@ -29,6 +43,10 @@ namespace AnalysisCore{
 extern "C" {
 #endif
   
+  static inline std::shared_ptr<AnalysisCore::Options> get_options_from_void(void* options){
+    return *static_cast<std::shared_ptr<AnalysisCore::Options>*>(options);
+  }
+
   ANALYSIS_CORE_EXPORT bool ac_options_get_bool(void* options, char* member_name);
   ANALYSIS_CORE_EXPORT double ac_options_get_double(void* options, char* member_name);
   ANALYSIS_CORE_EXPORT int ac_options_get_int(void* options, char* member_name);

@@ -1,6 +1,10 @@
 #ifndef DATASET_H
 #define DATASET_H
 
+#include <memory>
+
+#include <boost/config.hpp>
+
 #include "analysis-core/internal/member.h"
 #include "analysis-core/internal/base.h"
 
@@ -11,14 +15,29 @@ namespace AnalysisCore{
   class ANALYSIS_CORE_EXPORT Dataset : public internal::Base{
   
   public:
-    Dataset(int id);
     virtual ~Dataset();
     
-    std::shared_ptr<MemberBase> Get(const std::string& name);
-    void Set(const std::string& name, std::shared_ptr<MemberBase> member);
+    int GetId();
+    
+    std::shared_ptr<MemberBase> GetMember(const std::string& name);
+    void SetMember(const std::string& name, std::shared_ptr<MemberBase> member);
 
   private:
+    ANALYSIS_CORE_NO_EXPORT Dataset(int& id);
+    
+    ANALYSIS_CORE_NO_EXPORT std::shared_ptr<Dataset>&& Create(int& id);
+    
     int id_;
+    
+    friend class Core;
+    
+#if defined(BOOST_GCC) || defined(BOOST_CLANG)
+    friend void __gnu_cxx::new_allocator<Dataset>::construct<Dataset, int&>(Dataset*, int&);
+#elif defined(BOOST_MSVC)
+    friend class std::_Ref_count_obj;
+#else
+  #error Unsupported compiler
+#endif
     
   };
   
@@ -28,6 +47,10 @@ namespace AnalysisCore{
 extern "C" {
 #endif
   
+  static inline std::shared_ptr<AnalysisCore::Dataset> get_dataset_from_void(void* dataset){
+    return *static_cast<std::shared_ptr<AnalysisCore::Dataset>*>(dataset);
+  }
+
   ANALYSIS_CORE_EXPORT bool ac_dataset_get_bool(void* dataset, char* member_name);
   ANALYSIS_CORE_EXPORT double ac_dataset_get_double(void* dataset, char* member_name);
   ANALYSIS_CORE_EXPORT int ac_dataset_get_int(void* dataset, char* member_name);

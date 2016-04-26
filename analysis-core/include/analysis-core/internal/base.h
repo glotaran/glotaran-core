@@ -31,11 +31,19 @@ namespace AnalysisCore{
     class Base{
       
     public:
-      Base();
       virtual ~Base();
       
       template<class T> 
       boost::optional<typename std::enable_if<std::is_arithmetic<T>::value, T>::type> Get(const std::string& name){
+        auto m = members_[name];
+        if(!m)
+          return boost::none;
+        auto member = boost::polymorphic_pointer_downcast<Member<T>>(m);
+        return member->Get();
+      }
+      
+      template<class T>
+      boost::optional<typename std::enable_if<mpl::has_key<Converters, T>::value, T>::type> Get(const std::string& name){
         auto m = members_[name];
         if(!m)
           return boost::none;
@@ -62,6 +70,14 @@ namespace AnalysisCore{
       
       template<class T> void Set(const std::string& name, T& value){
         members_[name] = std::make_shared<Member<T>>(value);
+      }
+      
+      template<class T>
+      void Set(const std::string& name, typename std::enable_if<mpl::has_key<Converters, T>::value, T>::type in){
+        T m;
+        auto member = std::make_shared<Member<T, typename mpl::at<Converters, T>::type>>(m);
+        member->Set(in);
+        members_[name] = member;
       }
       
       template<class T, class AT, class... Args> void Set(const std::string& name, AT in, Args... args){

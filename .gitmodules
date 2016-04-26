@@ -1,0 +1,3 @@
+[submodule "analysis-core/external/Boost.DLL"]
+	path = analysis-core/external/Boost.DLL
+	url = https://github.com/apolukhin/Boost.DLL.git

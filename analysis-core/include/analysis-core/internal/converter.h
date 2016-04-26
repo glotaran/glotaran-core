@@ -32,14 +32,14 @@ namespace AnalysisCore{
     
     struct MatrixConverter : public Converter<mat>{
       
-      template <class AT1, class AT2> double* Get(vec* v, AT1* num_rows, AT2* num_cols){
+      template <class AT1, class AT2> double* Get(mat* v, AT1* num_rows, AT2* num_cols){
         *num_rows = v->n_rows;
         *num_cols = v->n_cols;
         return v->memptr();
       }
       
-      template <class AT1, class AT2> void Set(vec* v, double* ptr, AT1 num_rows, AT2 num_cols){
-        *v = vec(ptr, num_rows, num_cols);
+      template <class AT1, class AT2> void Set(mat* v, double* ptr, AT1 num_rows, AT2 num_cols){
+        *v = mat(ptr, num_rows, num_cols);
       }
       
     };

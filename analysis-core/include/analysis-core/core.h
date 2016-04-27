@@ -29,7 +29,7 @@ namespace AnalysisCore{
     bool SimulateUsingPlugin(const std::string& plugin_name, const int dataset_id, const std::shared_ptr<Options>& options);
     
     bool SolveUsingPlugin(const std::string& plugin_name, const std::vector<std::shared_ptr<Dataset>>& datasets, const std::shared_ptr<Options>& options);
-    bool SolveUsingPlugin(const std::string& plugin_name, const std::vector<const int>& dataset_ids, const std::shared_ptr<Options>& options);
+    bool SolveUsingPlugin(const std::string& plugin_name, const std::vector<int>& dataset_ids, const std::shared_ptr<Options>& options);
     
   private:
     int id;
@@ -56,11 +56,11 @@ extern "C" {
   
   ANALYSIS_CORE_EXPORT void ac_create_options(core_t* core, void** options);
   
-  ANALYSIS_CORE_EXPORT bool ac_simulate_using_plugin(core_t* core, const char* plugin_name, void* dataset, void* options);
-  ANALYSIS_CORE_EXPORT bool ac_simulate_using_plugin(core_t* core, const char* plugin_name, const int dataset_id, void* options);
+  ANALYSIS_CORE_EXPORT bool ac_simulate_using_plugin_with_dataset(core_t* core, const char* plugin_name, void* dataset, void* options);
+  ANALYSIS_CORE_EXPORT bool ac_simulate_using_plugin_with_id(core_t* core, const char* plugin_name, const int dataset_id, void* options);
   
-  ANALYSIS_CORE_EXPORT bool ac_solve_using_plugin(core_t* core, const char* plugin_name, void** datasets, const int number_of_datasets, void* options);
-  ANALYSIS_CORE_EXPORT bool ac_solve_using_plugin(core_t* core, const char* plugin_name, const int* dataset_ids, const int number_of_ids, void* options);
+  ANALYSIS_CORE_EXPORT bool ac_solve_using_plugin_with_datasets(core_t* core, const char* plugin_name, void** datasets, const int number_of_datasets, void* options);
+  ANALYSIS_CORE_EXPORT bool ac_solve_using_plugin_with_ids(core_t* core, const char* plugin_name, int* dataset_ids, const int number_of_ids, void* options);
   
 #ifdef __cplusplus
 }

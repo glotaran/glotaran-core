@@ -9,8 +9,8 @@ Dataset::Dataset(int& id) : id_(id){
 
 }
 
-std::shared_ptr<Dataset>&& Dataset::Create(int& id){
-  return std::move(std::make_shared<Dataset>(id));
+std::shared_ptr<Dataset> Dataset::Create(int& id){
+  return std::make_shared<Dataset>(id);
 }
 
 Dataset::~Dataset(){

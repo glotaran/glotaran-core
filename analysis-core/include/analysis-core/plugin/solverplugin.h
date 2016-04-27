@@ -3,6 +3,7 @@
 
 #include <map>
 #include <memory>
+#include <utility>
 
 #include <ceres/problem.h>
 
@@ -18,9 +19,9 @@ namespace AnalysisCore{
     
   public:
     
-    class SolverFunctor{
+    class ANALYSIS_CORE_EXPORT SolverFunctor : public virtual Functor{
     public:
-      virtual ~SolverFunctor();
+      virtual ~SolverFunctor(){}
       virtual bool operator()(double const* const* parameters, double* residuals) const = 0;
       
       inline void AddDataset(int id, std::shared_ptr<Dataset> dataset){
@@ -34,13 +35,13 @@ namespace AnalysisCore{
       inline void SetWavelength(int wavelength){
         wavelength_ = wavelength;
       }
-      
+           
     protected:
       int wavelength_;
       std::map<int, std::shared_ptr<Dataset>> datasets_;
     };
        
-    virtual ~SolverPlugin();
+    virtual ~SolverPlugin(){}
         
     virtual void FillProblem(ceres::Problem& problem, const std::vector<std::shared_ptr<Dataset>>& datasets, const std::shared_ptr<Options>& options) = 0;
     

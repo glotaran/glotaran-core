@@ -31,7 +31,7 @@ namespace AnalysisCore{
     class Base{
       
     public:
-      virtual ~Base();
+      virtual ~Base(){}
       
       template<class T> 
       boost::optional<typename std::enable_if<std::is_arithmetic<T>::value, T>::type> Get(const std::string& name){

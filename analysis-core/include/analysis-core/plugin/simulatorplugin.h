@@ -15,9 +15,9 @@ namespace AnalysisCore{
     
   public:
     
-    class SimulatorFunctor : public virtual Functor{
+    class ANALYSIS_CORE_EXPORT SimulatorFunctor : public virtual Functor{
     public:
-      virtual ~SimulatorFunctor();
+      virtual ~SimulatorFunctor(){}
       virtual bool operator()() = 0;
       
       inline void SetDataset(std::shared_ptr<Dataset> dataset){
@@ -28,7 +28,7 @@ namespace AnalysisCore{
         return dataset_;
       }
       
-      inline mat&& CalculateE(){      
+      inline mat CalculateE(){      
         const vec& location = dataset_->Get<vec>("location").value_or(vec());
         const vec& delta = dataset_->Get<vec>("delta").value_or(vec());
         const vec& amp = dataset_->Get<vec>("amp").value_or(vec());
@@ -38,19 +38,20 @@ namespace AnalysisCore{
         
         int i = 0;
                 
-        E.each_row([&](rowvec& v){
-          rowvec r = 2 * (wavenum.t() - rowvec(wavenum.n_cols, fill::ones) * location[i]) / delta[i];
-          r.for_each([](mat::elem_type& val){val *= val;});
-          v = amp[i] * exp(-log(2) * r);
+        E.each_col([&](vec& v){
+          vec c = 2 * (wavenum - vec(wavenum.n_rows, fill::ones) * location[i]) / delta[i];
+          v = amp[i] * exp(-log(2) * pow(c, 2));
           ++i;
         });
-       
-        return std::move(E);
+
+        return E;
       }
       
     protected:
       std::shared_ptr<Dataset> dataset_;
     };
+    
+    virtual ~SimulatorPlugin(){}
     
     virtual SimulatorFunctor* CreateSimulatorFunctor() = 0;
     

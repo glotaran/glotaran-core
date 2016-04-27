@@ -46,10 +46,10 @@ bool Core::SimulateUsingPlugin(const std::string& plugin_name, const int dataset
 
 bool Core::SolveUsingPlugin(const std::string& plugin_name, const std::vector<std::shared_ptr<Dataset>>& datasets, const std::shared_ptr<Options>& options){
   auto plugin = plugin_manager_.GetSolverPlugin(plugin_name);
-  return Solver::Solve();
+  return Solver::Solve(plugin, datasets, options);
 }
 
-bool Core::SolveUsingPlugin(const std::string& plugin_name, const std::vector<const int>& dataset_ids, const std::shared_ptr<Options>& options){
+bool Core::SolveUsingPlugin(const std::string& plugin_name, const std::vector<int>& dataset_ids, const std::shared_ptr<Options>& options){
   std::vector<std::shared_ptr<Dataset>> datasets;
   
   for(auto& id : dataset_ids)
@@ -82,18 +82,18 @@ ANALYSIS_CORE_EXPORT void ac_create_options(core_t* core, void** options){
   *options = static_cast<void*>(&o);
 }
 
-ANALYSIS_CORE_EXPORT bool ac_simulate_using_plugin(core_t* core, const char* plugin_name, void* dataset, void* options){
+ANALYSIS_CORE_EXPORT bool ac_simulate_using_plugin_with_dataset(core_t* core, const char* plugin_name, void* dataset, void* options){
   auto d = get_dataset_from_void(dataset);
   auto o = get_options_from_void(options);
   return core->SimulateUsingPlugin(std::string(plugin_name), d, o);
 }
 
-ANALYSIS_CORE_EXPORT bool ac_simulate_using_plugin(core_t* core, const char* plugin_name, const int dataset_id, void* options){
+ANALYSIS_CORE_EXPORT bool ac_simulate_using_plugin_with_id(core_t* core, const char* plugin_name, const int dataset_id, void* options){
   auto o = get_options_from_void(options);
   return core->SimulateUsingPlugin(std::string(plugin_name), dataset_id, o);
 }
   
-ANALYSIS_CORE_EXPORT bool ac_solve_using_plugin(core_t* core, const char* plugin_name, void** datasets, const int number_of_datasets, void* options){
+ANALYSIS_CORE_EXPORT bool ac_solve_using_plugin_with_datasets(core_t* core, const char* plugin_name, void** datasets, const int number_of_datasets, void* options){
   std::vector<std::shared_ptr<Dataset>> ds;
   auto o = get_options_from_void(options);
   
@@ -104,8 +104,9 @@ ANALYSIS_CORE_EXPORT bool ac_solve_using_plugin(core_t* core, const char* plugin
   
   return core->SolveUsingPlugin(std::string(plugin_name), ds, o);
 }
-ANALYSIS_CORE_EXPORT bool ac_solve_using_plugin(core_t* core, const char* plugin_name, const int* dataset_ids, const int number_of_ids, void* options){
-  std::vector<const int> ds;
+
+ANALYSIS_CORE_EXPORT bool ac_solve_using_plugin_with_ids(core_t* core, const char* plugin_name, const int* dataset_ids, const int number_of_ids, void* options){
+  std::vector<int> ds;
   auto o = get_options_from_void(options);
   
   for(int i = 0; i < number_of_ids; ++i){

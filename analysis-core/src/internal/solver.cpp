@@ -18,5 +18,9 @@ bool Solver::Solve(const std::shared_ptr<SolverPlugin>& plugin, const std::vecto
   ceres::Solver::Summary summary;
   ceres::Solve(ceres_options, &problem, &summary);
   
+#ifndef NDEBUG
+  std::cout << summary.FullReport() << std::endl;
+#endif
+  
   return true;
 }

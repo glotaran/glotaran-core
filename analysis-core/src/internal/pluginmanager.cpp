@@ -6,7 +6,7 @@ namespace dll = boost::dll;
 namespace fs = boost::filesystem;
 
 PluginManager::PluginManager(){
-  plugin_path_ = fs::path("../plugins");
+  plugin_path_ = dll::program_location().parent_path() / fs::path("../plugins");
 }
 
 PluginManager::~PluginManager(){
@@ -29,19 +29,12 @@ bool PluginManager::LoadPlugin(const boost::filesystem::path& name){
   if(!fs::exists(name) || !fs::is_regular_file(name))
     return false;
   
-  boost::system::error_code error;
-  
-  dll::shared_library plugin(name, error);
-  
-  if(error)
-    return false;
-  
-  if(name.has_stem() && name.stem().generic_string().find("sim") != std::string::npos){
+  if(name.has_stem() && name.stem().generic_string().find("_sim") != std::string::npos){
     auto simulator = dll::import<SimulatorPlugin>(name, "simulator");
     simulator_plugins_[simulator->Name()] = std::shared_ptr<SimulatorPlugin>(simulator.get(), [simulator](SimulatorPlugin*) mutable {simulator.reset();});
     return true;
   }
-  else if(name.has_stem() && name.stem().generic_string().rfind("sol") != std::string::npos){
+  else if(name.has_stem() && name.stem().generic_string().rfind("_sol") != std::string::npos){
     auto solver = dll::import<SolverPlugin>(name, "solver");
     solver_plugins_[solver->Name()] = std::shared_ptr<SolverPlugin>(solver.get(), [solver](SolverPlugin*) mutable {solver.reset();});
     return true;
@@ -52,22 +45,22 @@ bool PluginManager::LoadPlugin(const boost::filesystem::path& name){
   return false;
 }
 
-bool PluginManager::LoadAllPlugins(){
+void PluginManager::LoadAllPlugins(){
   if(!fs::is_directory(plugin_path_))
-    return false;
+    return;
   
-  bool success = true;
-  
-  for(auto&& name : fs::recursive_directory_iterator(plugin_path_)){
+  for(auto&& name : fs::directory_iterator(plugin_path_)){
     if(!fs::is_regular_file(name))
       continue;
-    if(name.path().has_stem()
-      && (name.path().stem().generic_string().rfind("_simulator") == std::string::npos
-      || name.path().stem().generic_string().rfind("_solver") == std::string::npos))
-        continue;
-    success &= LoadPlugin(name.path());
+    LoadPlugin(name.path());
   }
-  
-  return success;
-      
 }
+
+std::shared_ptr<SimulatorPlugin> PluginManager::GetSimulatorPlugin(const std::string& name){
+  return simulator_plugins_[name];
+}
+
+std::shared_ptr<SolverPlugin> PluginManager::GetSolverPlugin(const std::string& name){
+  return solver_plugins_[name];
+}
+

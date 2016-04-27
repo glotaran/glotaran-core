@@ -75,7 +75,7 @@ void ac_set_vector(void* base, const char* member_name, double* vector, int num_
   b->Set<vec, double*>(std::string(member_name), vector, num_rows);
 }
 
-void ac_get_matrix(void* base, const char* member_name, double* matrix, int num_rows, int num_cols){
+void ac_set_matrix(void* base, const char* member_name, double* matrix, int num_rows, int num_cols){
   auto b = get_base_from_void(base);
   b->Set<mat, double*>(std::string(member_name), matrix, num_rows, num_cols);
 }

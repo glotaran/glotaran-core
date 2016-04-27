@@ -25,7 +25,7 @@ namespace AnalysisCore{
   private:
     ANALYSIS_CORE_NO_EXPORT Dataset(int& id);
     
-    ANALYSIS_CORE_NO_EXPORT std::shared_ptr<Dataset>&& Create(int& id);
+    ANALYSIS_CORE_NO_EXPORT static std::shared_ptr<Dataset> Create(int& id);
     
     int id_;
     

@@ -11,8 +11,8 @@ namespace AnaylsisCore{
   namespace internal{
     class MemberBase{
     public:
-      MemberBase();
-      virtual ~MemberBase();
+      MemberBase(){}
+      virtual ~MemberBase(){}
     };
     
     template<class...> class Member;
@@ -72,21 +72,21 @@ namespace AnaylsisCore{
       virtual ~Member<T, Converter>(){}
        
       T Get(){
-        static_cast<Member<T>*>(this)->Get();
+        return Member<T>::Get();
       }
       
-      void Set(T& m){
-        static_cast<Member<T>*>(this)->Set(m);
+      void Set(T m){
+        return Member<T>::Set(m);
       }
        
       template<class AT, class... Args> AT Get(Args... args){
         Converter c;
-        return c.Get((T*)this, args...);
+        return c.Get(this->m_, args...);
       }
       
       template<class AT, class... Args> void Set(AT arg, Args... args){
         Converter c;
-        c.Set((T*)(this), arg, args...);
+        c.Set(this->m_, arg, args...);
       }
       
     };

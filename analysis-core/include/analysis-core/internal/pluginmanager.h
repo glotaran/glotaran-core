@@ -26,7 +26,7 @@ public:
   bool LoadPlugin(const std::string& name);
   bool LoadPlugin(const fs::path& name);
     
-  bool LoadAllPlugins();
+  void LoadAllPlugins();
   
   std::shared_ptr<SimulatorPlugin> GetSimulatorPlugin(const std::string& name);
   std::shared_ptr<SolverPlugin> GetSolverPlugin(const std::string& name);

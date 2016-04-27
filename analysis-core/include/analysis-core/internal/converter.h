@@ -19,27 +19,27 @@ namespace AnalysisCore{
     
     struct VectorConverter : public Converter<vec>{
       
-      template<class AT> double* Get(vec* v, AT* num_rows){
-        *num_rows = v->n_rows;
-        return v->memptr();
+      double* Get(vec& v, int* num_rows){
+        *num_rows = v.n_rows;
+        return v.memptr();
       }
       
-      template<class AT> void Set(vec* v, double* ptr, AT num_rows){
-        *v = vec(ptr, num_rows);
+      void Set(vec& v, double* ptr, int num_rows){
+        v = vec(ptr, num_rows);
       }
       
     };
     
     struct MatrixConverter : public Converter<mat>{
       
-      template <class AT1, class AT2> double* Get(mat* v, AT1* num_rows, AT2* num_cols){
-        *num_rows = v->n_rows;
-        *num_cols = v->n_cols;
-        return v->memptr();
+      double* Get(mat& m, int* num_rows, int* num_cols){
+        *num_rows = m.n_rows;
+        *num_cols = m.n_cols;
+        return m.memptr();
       }
       
-      template <class AT1, class AT2> void Set(mat* v, double* ptr, AT1 num_rows, AT2 num_cols){
-        *v = mat(ptr, num_rows, num_cols);
+      void Set(mat& m, double* ptr, int num_rows, int num_cols){
+        m = mat(ptr, num_rows, num_cols);
       }
       
     };

@@ -11,12 +11,12 @@ namespace AnalysisCore{
     
   public:
     
-    class KinSimFunctor : public SimulatorFunctor{
+    class ANALYSIS_CORE_EXPORT KinSimFunctor : public virtual SimulatorFunctor{
     public:
       KinSimFunctor();
       virtual ~KinSimFunctor();
       
-      mat&& CalculateC(double const* const* parameters = nullptr);
+      mat CalculateC(double const* const* parameters = nullptr);
       
       bool operator()();
     };
@@ -30,5 +30,7 @@ namespace AnalysisCore{
   };
   
 }
+
+ANALYSIS_CORE_EXPORT AnalysisCore::KinSimPlugin simulator;
 
 #endif //KIN_SIM_H

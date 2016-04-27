@@ -22,7 +22,7 @@ namespace AnalysisCore{
     
   private:
     ANALYSIS_CORE_NO_EXPORT Options();
-    ANALYSIS_CORE_NO_EXPORT std::shared_ptr<Options>&& Create();
+    ANALYSIS_CORE_NO_EXPORT static std::shared_ptr<Options> Create();
     
     ceres::Solver::Options ceres_options_;
     

@@ -11,12 +11,12 @@ namespace AnalysisCore{
     
   public:
     
-    class KinSolFunctor : public SolverFunctor{
+    class ANALYSIS_CORE_EXPORT KinSolFunctor : public virtual SolverFunctor{
     public:
       KinSolFunctor();
       virtual ~KinSolFunctor();
       
-      mat&& CalculateC(double const* const* parameters);
+      mat CalculateC(double const* const* parameters);
       
       bool operator()(double const* const* parameters, double* residuals) const;
     };
@@ -33,5 +33,7 @@ namespace AnalysisCore{
   };
   
 }
+
+ANALYSIS_CORE_EXPORT AnalysisCore::KinSolPlugin solver; 
 
 #endif //KIN_SOL_H

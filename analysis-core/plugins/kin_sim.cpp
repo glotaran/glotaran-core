@@ -18,6 +18,7 @@ bool KinSimPlugin::KinSimFunctor::operator()(){
   
   bool noise = options_->Get<bool>("noise").value_or(false);
   double sigma = options_->Get<double>("sigma").value_or(0.005);
+  
   if(noise)
     PSI *= (sigma * mat(PSI.n_rows, PSI.n_rows, fill::randn));
   
@@ -26,11 +27,19 @@ bool KinSimPlugin::KinSimFunctor::operator()(){
   return true;
 }
 
-mat&& KinSimPlugin::KinSimFunctor::CalculateC(double const* const* parameters){
+mat KinSimPlugin::KinSimFunctor::CalculateC(double const* const* parameters){
   const vec& T = dataset_->Get<vec>("times").value_or(vec());
   const vec& k = dataset_->Get<vec>("kinpar").value_or(vec());
   mat C = exp(T * k.t());
-  return std::move(C);
+  return C;
+}
+
+KinSimPlugin::KinSimPlugin(){
+
+}
+
+KinSimPlugin::~KinSimPlugin(){
+
 }
 
 std::string KinSimPlugin::Name() const {

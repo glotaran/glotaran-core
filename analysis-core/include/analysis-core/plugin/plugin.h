@@ -18,10 +18,10 @@ namespace AnalysisCore{
     
   public:
     
-    class Functor{
+    class ANALYSIS_CORE_EXPORT Functor{
     public:
-      virtual ~Functor();
-      virtual mat&& CalculateC(double const* const* parameters) = 0;
+      virtual ~Functor(){}
+      virtual mat CalculateC(double const* const* parameters) = 0;
       
       inline void SetOptions(std::shared_ptr<Options> options){
         options_ = options;
@@ -31,7 +31,7 @@ namespace AnalysisCore{
       std::shared_ptr<Options> options_;
     };
     
-    virtual ~Plugin();
+    virtual ~Plugin(){}
     virtual std::string Name() const = 0;
     
   };

@@ -15,36 +15,41 @@ KinSolPlugin::KinSolFunctor::~KinSolFunctor(){
 
 }
 
-mat&& KinSolPlugin::KinSolFunctor::CalculateC(double const* const* parameters){
+mat KinSolPlugin::KinSolFunctor::CalculateC(double const* const* parameters){
   auto dataset = (*datasets_.begin()).second;
   const vec& T = dataset->Get<vec>("times").value_or(vec());
-  const vec& kinpar = dataset->Get<vec>("kinpar").value_or(vec());
-  vec k = vec(parameters[0], kinpar.n_rows);
+  int number_of_rateconstants;
+  double* kinpar = dataset->Get<vec, double*>("kinpar", &number_of_rateconstants);
+  vec k = vec(parameters[0], number_of_rateconstants);
   mat C = exp(T * k.t());
-  return std::move(C);
+  return C;
 }
 
 bool KinSolPlugin::KinSolFunctor::operator()(double const* const* parameters, double* residuals) const {
     
     auto dataset = (*datasets_.begin()).second;
     
-    const vec& timestamps = dataset->Get<vec>("times").value_or(vec());
-    const vec& rateconstants = dataset->Get<vec>("kinpar").value_or(vec());
+    int number_of_timestamps;
+    int number_of_rateconstants;
     
-    auto C = const_cast<KinSolFunctor*>(this)->CalculateC(parameters);
+    double* timestamps = dataset->Get<vec, double*>("times", &number_of_timestamps);
+    double* rateconstants = dataset->Get<vec, double*>("kinpar", &number_of_rateconstants);
     
+    const mat& C = const_cast<KinSolFunctor*>(this)->CalculateC(parameters);
+       
     auto PSI = dataset->Get<mat>("PSI").value_or(mat());
-        
+    
     if(PSI.n_elem == 0)
       return false;
     
     vec b = PSI.col(wavelength_);
     
-    LAPACK::GetResidualsUsingQR(timestamps.n_rows, rateconstants.n_rows, timestamps.n_rows, 1, C.memptr(), b.memptr());
+    LAPACK::GetResidualsUsingQR(number_of_timestamps, number_of_rateconstants, number_of_timestamps, 1, C.memptr(), b.memptr());
     
-    for(int i = 0; i < timestamps.n_rows; ++i)
+    //std::cout << b << std::endl;
+    
+    for(int i = 0; i < number_of_timestamps; ++i)
       residuals[i] = b[i];
-    
     
     return true;
 }
@@ -63,21 +68,24 @@ std::string KinSolPlugin::Name() const {
 
 void KinSolPlugin::FillProblem(ceres::Problem& problem, const std::vector<std::shared_ptr<Dataset>>& datasets, const std::shared_ptr<Options>& options){
   auto dataset = datasets.at(0);
-  const vec& timestamps = dataset->Get<vec>("times").value_or(vec());
-  const vec& wavelengths = dataset->Get<vec>("wavenum").value_or(vec());
-  vec rateconstants = dataset->Get<vec>("kinpar").value_or(vec());
   
-  for(int i = 0; i < wavelengths.n_rows; ++i){
+  int number_of_timestamps;
+  int number_of_wavelengths;
+  int number_of_rateconstants;
+  
+  double* timestamps = dataset->Get<vec, double*>("times", &number_of_timestamps);
+  double* wavelengths = dataset->Get<vec, double*>("wavenum", &number_of_wavelengths);
+  double* rateconstants = dataset->Get<vec, double*>("kinpar", &number_of_rateconstants);
+  
+  for(int i = 0; i < number_of_wavelengths; ++i){
     auto functor = CreateSolverFunctor();
     functor->AddDataset(dataset->GetId(), dataset);
     functor->SetWavelength(i);
     ceres::DynamicNumericDiffCostFunction<SolverFunctor>* costFunction = new ceres::DynamicNumericDiffCostFunction<SolverFunctor>(functor);
-    costFunction->AddParameterBlock(rateconstants.n_rows);
-    costFunction->SetNumResiduals(timestamps.n_rows);
-    problem.AddResidualBlock(costFunction, NULL, rateconstants.memptr());
+    costFunction->AddParameterBlock(number_of_rateconstants);
+    costFunction->SetNumResiduals(number_of_timestamps);
+    problem.AddResidualBlock(costFunction, NULL, rateconstants);
   }
-  
-  dataset->Set<vec>("kinpar", rateconstants);
 }
 
 SolverPlugin::SolverFunctor* KinSolPlugin::CreateSolverFunctor(){

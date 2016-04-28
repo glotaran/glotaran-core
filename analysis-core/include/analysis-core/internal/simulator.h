@@ -12,4 +12,5 @@ namespace AnalysisCore{
     static bool Simulate(const std::shared_ptr<SimulatorPlugin>& plugin, const std::shared_ptr<Dataset>& dataset, const std::shared_ptr<Options>& options);
   };
 }
+
 #endif // SIMULATOR_H

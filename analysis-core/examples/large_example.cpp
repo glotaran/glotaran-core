@@ -12,10 +12,7 @@ using namespace AnalysisCore;
 using namespace arma;
 
 int main(int argc, char** argv) {
-  vec times1 = regspace(-0.5, 0.02, 9.98);
-  vec times2 = regspace(10, 3.0, 1500);
-  vec times = join_cols(times1, times2);
-  
+  vec times = regspace(0, 1.5, 1500);
   vec wavenum = regspace(12820, 4.6, 15120);
   vec location({14705, 13513, 14492, 14388, 14184, 13986});
   vec delta({400, 1000, 300, 200, 350, 330});
@@ -30,6 +27,8 @@ int main(int argc, char** argv) {
   
   auto options = c.CreateOptions();
   
+  //options->Set<bool>("noise", true);
+  
   dataset->Set<vec>("times", times);
   dataset->Set<vec>("wavenum", wavenum);
   dataset->Set<vec>("location", location);
@@ -38,16 +37,14 @@ int main(int argc, char** argv) {
   dataset->Set<vec>("kinpar", kinpar);
   
   c.SimulateUsingPlugin("kin_sim", dataset, options);
-  
+    
   vec k({.005, 0.003, 0.00022, 0.0300, 0.000888});
   dataset->Set<vec>("kinpar", k);
   
   c.SolveUsingPlugin("kin_sol", {dataset}, options);
   
-  vec k2 = dataset->Get<vec>("kinpar").value_or(vec());
+  vec k_solved = dataset->Get<vec>("kinpar").value_or(vec());
   std::cout << std::setprecision(10);
-  k.raw_print(std::cout);
-  std::cout << std::endl;
-  k2.raw_print(std::cout);
+  k_solved.raw_print(std::cout);
   return 0;
 }

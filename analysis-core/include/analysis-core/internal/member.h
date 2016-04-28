@@ -1,8 +1,6 @@
 #ifndef MEMBER_H
 #define MEMBER_H
 
-#include <type_traits>
-
 #include <armadillo>
 
 using namespace arma;

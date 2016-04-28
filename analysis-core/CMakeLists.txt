@@ -21,14 +21,14 @@ include_directories(${Boost_INCLUDE_DIRS})
 include_directories(include
                     external/Boost.DLL/include)
 
-set(internal 
-    src/internal/base
+set(internal
     src/internal/pluginmanager
     src/internal/solver
     src/internal/simulator
     )
 
 set(srcs
+    src/api
     src/dataset
     src/options
     src/core

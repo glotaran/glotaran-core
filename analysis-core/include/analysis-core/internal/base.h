@@ -34,7 +34,7 @@ namespace AnalysisCore{
       virtual ~Base(){}
       
       template<class T> 
-      boost::optional<typename std::enable_if<std::is_arithmetic<T>::value, T>::type> Get(const std::string& name){
+      boost::optional<typename std::enable_if<std::is_arithmetic<T>::value , T>::type> Get(const std::string& name){
         auto m = members_[name];
         if(!m)
           return boost::none;
@@ -68,7 +68,13 @@ namespace AnalysisCore{
         return member->Get<AT>(args...);
       }
       
-      template<class T> void Set(const std::string& name, T& value){
+      template<class T> 
+      void Set(const std::string& name, typename std::enable_if<std::is_arithmetic<T>::value, T>::type value){
+        members_[name] = std::make_shared<Member<T>>(value);
+      }
+      
+      template<class T> 
+      void Set(const std::string& name, typename std::enable_if<std::is_pointer<T>::value, T>::type value){
         members_[name] = std::make_shared<Member<T>>(value);
       }
       
@@ -80,7 +86,8 @@ namespace AnalysisCore{
         members_[name] = member;
       }
       
-      template<class T, class AT, class... Args> void Set(const std::string& name, AT in, Args... args){
+      template<class T, class AT, class... Args>
+      void Set(const std::string& name, typename std::enable_if<mpl::has_key<Converters, T>::value && std::is_pointer<AT>::value, AT>::type in, Args... args){
         T m;
         auto member = std::make_shared<Member<T, typename mpl::at<Converters, T>::type>>(m);
         member->Set<AT>(in, args...);
@@ -94,30 +101,5 @@ namespace AnalysisCore{
     
   }
 }
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-  
-  bool ac_get_bool(void* base, const char* member_name);
-  double ac_get_double(void* base, const char* member_name);
-  double ac_get_int(void* base, const char* member_name);
-  const char* ac_get_string(void* base, const char* member_name);
-  void* ac_get_arbitrary(void* base, const char* member_name);
-  double* ac_get_vector(void* base, const char* member_name, int* num_rows);
-  double* ac_get_matrix(void* base, const char* member_name, int* num_rows, int* num_cols);
-  
-  void ac_set_bool(void* base, const char* member_name, bool value);
-  void ac_set_double(void* base, const char* member_name, double value);
-  void ac_set_int(void* base, const char* member_name, int value);
-  void ac_set_string(void* base, const char* member_name, const char* value);
-  void ac_set_arbitrary(void* base, const char* member_name, void* value);
-  void ac_set_vector(void* base, const char* member_name, double* vector, int num_rows);
-  void ac_set_matrix(void* base, const char* member_name, double* matrix, int num_rows, int num_cols);
-
-    
-#ifdef __cplusplus
-}
-#endif
 
 #endif //AC_BASE_H

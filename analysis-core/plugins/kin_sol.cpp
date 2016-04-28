@@ -21,7 +21,7 @@ mat KinSolPlugin::KinSolFunctor::CalculateC(double const* const* parameters){
   int number_of_rateconstants;
   double* kinpar = dataset->Get<vec, double*>("kinpar", &number_of_rateconstants);
   vec k = vec(parameters[0], number_of_rateconstants);
-  mat C = exp(T * k.t());
+  mat C = exp(T * -k.t());
   return C;
 }
 
@@ -29,14 +29,8 @@ bool KinSolPlugin::KinSolFunctor::operator()(double const* const* parameters, do
     
     auto dataset = (*datasets_.begin()).second;
     
-    int number_of_timestamps;
-    int number_of_rateconstants;
-    
-    double* timestamps = dataset->Get<vec, double*>("times", &number_of_timestamps);
-    double* rateconstants = dataset->Get<vec, double*>("kinpar", &number_of_rateconstants);
-    
-    const mat& C = const_cast<KinSolFunctor*>(this)->CalculateC(parameters);
-       
+    mat C = const_cast<KinSolFunctor*>(this)->CalculateC(parameters);
+
     auto PSI = dataset->Get<mat>("PSI").value_or(mat());
     
     if(PSI.n_elem == 0)
@@ -44,11 +38,9 @@ bool KinSolPlugin::KinSolFunctor::operator()(double const* const* parameters, do
     
     vec b = PSI.col(wavelength_);
     
-    LAPACK::GetResidualsUsingQR(number_of_timestamps, number_of_rateconstants, number_of_timestamps, 1, C.memptr(), b.memptr());
+    LAPACK::GetResidualsUsingQR(C.n_rows, C.n_cols, b.n_rows, b.n_cols, C.memptr(), b.memptr());
     
-    //std::cout << b << std::endl;
-    
-    for(int i = 0; i < number_of_timestamps; ++i)
+    for(int i = 0; i < C.n_rows; ++i)
       residuals[i] = b[i];
     
     return true;

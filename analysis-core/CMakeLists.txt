@@ -8,7 +8,7 @@ include_directories(${CERES_INCLUDE_DIRS})
 
 find_package(LAPACK REQUIRED)
 
-find_package(Armadillo REQUIRED)
+find_package(Armadillo 6.700 REQUIRED)
 include_directories(${ARMADILLO_INCLUDE_DIRS})
 
 set(Boost_USE_STATIC_LIBS OFF) 

@@ -1,4 +1,6 @@
-cmake_policy(SET CMP0063 OLD)
+if(POLICY CMP0063)
+  cmake_policy(SET CMP0063 OLD)
+endif()
 
 add_executable(large_example_cpp large_example.cpp)
 
